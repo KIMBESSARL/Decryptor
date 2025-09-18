@@ -2,47 +2,44 @@
 ************************************************************
 * COMPILERS COURSE - Algonquin College
 * Code version: Fall, 2025
-* Author: TO_DO
+* Author: Kingsly Mbekug / Jatin Bali
 * Professors: Paulo Sousa
 ************************************************************
 #
 # ECHO "=---------------------------------------="
 # ECHO "|  COMPILERS - ALGONQUIN COLLEGE (F25)  |"
 # ECHO "=---------------------------------------="
-# ECHO "    @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@    ”
-# ECHO "    @@                             @@    ”
-# ECHO "    @@           %&@@@@@@@@@@@     @@    ”
-# ECHO "    @@       @%% (@@@@@@@@@  @     @@    ”
-# ECHO "    @@      @& @   @ @       @     @@    ”
-# ECHO "    @@     @ @ %  / /   @@@@@@     @@    ”
-# ECHO "    @@      & @ @  @@              @@    ”
-# ECHO "    @@       @/ @*@ @ @   @        @@    ”
-# ECHO "    @@           @@@@  @@ @ @      @@    ”
-# ECHO "    @@            /@@    @@@ @     @@    ”
-# ECHO "    @@     @      / /     @@ @     @@    ”
-# ECHO "    @@     @ @@   /@/   @@@ @      @@    ”
-# ECHO "    @@     @@@@@@@@@@@@@@@         @@    ”
-# ECHO "    @@                             @@    ”
-# ECHO "    @@         S O F I A           @@    ”
-# ECHO "    @@                             @@    ”
-# ECHO "    @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@    ”
+# ECHO "    @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@    ”
+# ECHO "    @@                           @@    ”
+# ECHO "    @@                           @@    ”
+# ECHO "    @@      @@@@@@@@@@@@@        @@    ?"
+# ECHO "    @@      @@           @@      @@    ?"
+# ECHO "    @@      @@            @@     @@    ?"
+# ECHO "    @@      @@             @@    @@    ?"
+# ECHO "    @@      @@             @@    @@    ?"
+# ECHO "    @@      @@            @@     @@    ?"
+# ECHO "    @@      @@           @@      @@    ?"
+# ECHO "    @@      @@@@@@@@@@@@@        @@    ?"
+# ECHO "    @@                           @@    ”
+# ECHO "    @@     D E C R Y P T E R     @@    ”
+# ECHO "    @@      KINGSLY / JATIN      @@    ”
+# ECHO "    @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@    ”
 # ECHO "                                         "
-# ECHO "[COMPILER SCRIPT .......................]"
+# ECHO "[CODER SCRIPT ..........................]"
 # ECHO "                                         "
 */
 
 /*
 ************************************************************
-* File name: compilers.c
+* File name: Compilers.h
 * Compiler: MS Visual Studio 2022
 * Course: CST 8152 – Compilers, Lab Section: [011, 012]
-* Assignment: A12, A22, A32.
-* Date: sEP 01 2025
+* Assignment: A1-A5.
+* Date: Sep 01 2025
 * Professor: Paulo Sousa
-* Purpose: This file is the main program of Compilers Project
-* Function list: main().
-************************************************************
-*/
+* Purpose: This file defines the functions called by main function.
+* Function list: mainReader(), mainScanner(), mainParser().
+*************************************************************/
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -77,9 +74,9 @@
 *************************************************************
 */
 
-decoder_intg main(int argc, char** argv) {
+en_int main(int argc, char** argv) {
 
-	decoder_intg i;
+	en_int i;
 	printLogo();
 	if (DEBUG) {
 		for (i = 0; i < argc; ++i)
@@ -94,7 +91,7 @@ decoder_intg main(int argc, char** argv) {
 			PGM_WRT, "] - Writer\n");
 		return EXIT_FAILURE;
 	}
-	decoder_char option = argv[1][0];
+	en_char option = argv[1][0];
 	switch (option) {
 	case PGM_CDR:
 		printf("%s%c%s", "\n[Option '", PGM_CDR, "': Starting CODER .....]\n\n");
@@ -125,25 +122,25 @@ decoder_intg main(int argc, char** argv) {
 *************************************************************
 */
 
-decoder_void printLogo() {
-	printf("%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s",
+en_void printLogo() {
+	printf("%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s",
 		"\t=---------------------------------------=\n",
 		"\t|  COMPILERS - ALGONQUIN COLLEGE (S25)  |\n",
 		"\t=---------------------------------------=\n",
 		"\t    @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@    \n",
 		"\t    @@                             @@    \n",
 		"\t    @@      @@@@@@@@@@@@@@@        @@    \n",
-		"\t    @@      @@           @@        @@    \n",
 		"\t    @@      @@            @@       @@    \n",
 		"\t    @@      @@             @@      @@    \n",
+		"\t    @@      @@              @@     @@    \n",
+		"\t    @@      @@              @@     @@    \n",
 		"\t    @@      @@             @@      @@    \n",
 		"\t    @@      @@            @@       @@    \n",
-		"\t    @@      @@           @@        @@    \n",
 		"\t    @@      @@@@@@@@@@@@@@         @@    \n",
 		"\t    @@                             @@    \n",
-		"\t    @@        D E C O D E R        @@    \n",
-		"\t    @@                             @@    \n",
-		"\t    @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@    \n",
+		"\t    @@     D E C R Y P T E R       @@    \n",
+		"\t    @@      KINGSLY / JATIN        @@    \n",
+		"\t    @@@@@@@@@@@@@@@@@@@@@@@@@@@@#@@@@    \n",
 		"\t                                         \n",
 		"\t[COMPILER SCRIPT .......................]\n",
 		"\t                                         \n"
@@ -159,15 +156,16 @@ decoder_void printLogo() {
 ************************************************************
 */
 
-decoder_void errorPrint(decoder_strg fmt, ...) {
+en_void errorPrint(en_strg fmt, ...) {
 	/* Initialize variable list */
 	va_list ap;
 	va_start(ap, fmt);
 
-	(decoder_void)vfprintf(stderr, fmt, ap);
+	(en_void)vfprintf(stderr, fmt, ap);
 	va_end(ap);
 
 	/* Move to new line */
 	if (strchr(fmt, '\n') == NULL)
 		fprintf(stderr, "\n");
+
 }

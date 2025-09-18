@@ -99,15 +99,15 @@
 */
 
 // Main function to handle command-line arguments
-decoder_intg main1Coder(decoder_intg argc, decoder_strg* argv) {
+en_int main1Coder(en_int argc, en_strg* argv) {
 	if (argc < 5) {
 		printf("Usage: %s [cypher=1|decypher=0] <input_file> <output_file>\n", argv[0]);
 		return EXIT_FAILURE;
 	}
-	decoder_strg operation = "";
-	decoder_strg inputFileName = "";
-	decoder_strg key = "decoder";
-	decoder_strg outputFileName = "";
+	en_strg operation = "";
+	en_strg inputFileName = "";
+	en_strg key = "decoder";
+	en_strg outputFileName = "";
 	if (argc > 4) {
 		operation = argv[2];
 		inputFileName = argv[3];
@@ -123,8 +123,8 @@ decoder_intg main1Coder(decoder_intg argc, decoder_strg* argv) {
 		}
 		printf("Operation '%s' completed successfully.\n", operation);
 		// Call the other operation in memory
-		decoder_intg size = getSizeOfFile(outputFileName);
-		decoder_strg output;
+		en_int size = getSizeOfFile(outputFileName);
+		en_strg output;
 		if (atoi(operation) == CYPHER)
 			output = vigenereMem(outputFileName, key, DECYPHER);
 		else 

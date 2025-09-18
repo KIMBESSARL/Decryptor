@@ -2,25 +2,28 @@
 ************************************************************
 * COMPILERS COURSE - Algonquin College
 * Code version: Fall, 2025
-* Author: TO_DO
+* Author: Kingsly Mbekug / Jatin Bali
 * Professors: Paulo Sousa
 ************************************************************
 #
 # ECHO "=---------------------------------------="
 # ECHO "|  COMPILERS - ALGONQUIN COLLEGE (F25)  |"
 # ECHO "=---------------------------------------="
-# ECHO "    @@        @@@@@@@@@@@@@        @@    �"
-# ECHO "    @@        @@           @@      @@    �"
-# ECHO "    @@        @@            @@     @@    �"
-# ECHO "    @@        @@             @@    @@    �"
-# ECHO "    @@        @@             @@    @@    �"
-# ECHO "    @@        @@            @@     @@    �"
-# ECHO "    @@        @@           @@      @@    �"
-# ECHO "    @@        @@@@@@@@@@@@@        @@    �"
-# ECHO "    @@                             @@    ”
-# ECHO "    @@        D E C R Y P T E R    @@    ”
-# ECHO "    @@                             @@    ”
-# ECHO "    @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@    ”
+# ECHO "    @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@    ”
+# ECHO "    @@                           @@    ”
+# ECHO "    @@                           @@    ”
+# ECHO "    @@      @@@@@@@@@@@@@        @@    �"
+# ECHO "    @@      @@           @@      @@    �"
+# ECHO "    @@      @@            @@     @@    �"
+# ECHO "    @@      @@             @@    @@    �"
+# ECHO "    @@      @@             @@    @@    �"
+# ECHO "    @@      @@            @@     @@    �"
+# ECHO "    @@      @@           @@      @@    �"
+# ECHO "    @@      @@@@@@@@@@@@@        @@    �"
+# ECHO "    @@                           @@    ”
+# ECHO "    @@     D E C R Y P T E R     @@    ”
+# ECHO "    @@      KINGSLY / JATIN      @@    ”
+# ECHO "    @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@    ”
 # ECHO "                                         "
 # ECHO "[CODER SCRIPT ..........................]"
 # ECHO "                                         "
@@ -55,11 +58,11 @@
 
 /* TO_DO: Adjust your language (cannot be "Sofia") */
 /* Language name */
-#define STR_LANGNAME	"decoder"
+#define STR_LANGNAME	"encrypter"
 
 /* Logical constants - adapt for your language */
-#define DECODER_TRUE  1
-#define DECODER_FALSE 0
+#define TRUE  1
+#define FALSE 0
 
 #define INVALID NULL
 #define EOF_CHAR '\0'
@@ -73,17 +76,17 @@ NOTE: Some types may not be directly used by your language,
 */
 
 /* TO_DO: Define your typedefs */
-typedef char			decoder_char;
-typedef char*			decoder_strg;
-typedef int				decoder_intg;
-typedef float			decoder_real;
-typedef void			decoder_void;
+typedef char			en_char;
+typedef char*			en_strg;
+typedef int				en_int;
+typedef float			en_real;
+typedef void			en_void;
 
-typedef unsigned char	decoder_boln;
-typedef unsigned char	decoder_byte;
+typedef unsigned char	en_boln;
+typedef unsigned char	en_byte;
 
-typedef long			decoder_long;
-typedef double			decoder_doub;
+typedef long			en_long;
+typedef double			en_doub;
 
 /*
 ------------------------------------------------------------
@@ -109,10 +112,10 @@ Main functions signatures
 (Code will be updated during next assignments)
 ------------------------------------------------------------
 */
-decoder_intg main1Coder	(decoder_intg argc, decoder_strg* argv);
+en_int main1Coder	(en_int argc, en_strg* argv);
 
-decoder_void printLogo();
-decoder_void errorPrint(decoder_strg fmt, ...);
+en_void printLogo();
+en_void errorPrint(en_strg fmt, ...);
 
 #endif
 

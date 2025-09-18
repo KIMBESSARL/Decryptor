@@ -1,4 +1,4 @@
-/*
+Ôªø/*
 ************************************************************
 * COMPILERS COURSE - Algonquin College
 * Code version: Fall, 2025
@@ -9,23 +9,21 @@
 # ECHO "=---------------------------------------="
 # ECHO "|  COMPILERS - ALGONQUIN COLLEGE (F25)  |"
 # ECHO "=---------------------------------------="
-# ECHO "    @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@    î
-# ECHO "    @@                             @@    î
-# ECHO "    @@           %&@@@@@@@@@@@     @@    î
-# ECHO "    @@       @%% (@@@@@@@@@  @     @@    î
-# ECHO "    @@      @& @   @ @       @     @@    î
-# ECHO "    @@     @ @ %  / /   @@@@@@     @@    î
-# ECHO "    @@      & @ @  @@              @@    î
-# ECHO "    @@       @/ @*@ @ @   @        @@    î
-# ECHO "    @@           @@@@  @@ @ @      @@    î
-# ECHO "    @@            /@@    @@@ @     @@    î
-# ECHO "    @@     @      / /     @@ @     @@    î
-# ECHO "    @@     @ @@   /@/   @@@ @      @@    î
-# ECHO "    @@     @@@@@@@@@@@@@@@         @@    î
-# ECHO "    @@                             @@    î
-# ECHO "    @@         S O F I A           @@    î
-# ECHO "    @@                             @@    î
-# ECHO "    @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@    î
+# ECHO "    @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@    ‚Äù
+# ECHO "    @@                           @@    ‚Äù
+# ECHO "    @@                           @@    ‚Äù
+# ECHO "    @@      @@@@@@@@@@@@@        @@    ÔøΩ"
+# ECHO "    @@      @@           @@      @@    ÔøΩ"
+# ECHO "    @@      @@            @@     @@    ÔøΩ"
+# ECHO "    @@      @@             @@    @@    ÔøΩ"
+# ECHO "    @@      @@             @@    @@    ÔøΩ"
+# ECHO "    @@      @@            @@     @@    ÔøΩ"
+# ECHO "    @@      @@           @@      @@    ÔøΩ"
+# ECHO "    @@      @@@@@@@@@@@@@        @@    ÔøΩ"
+# ECHO "    @@                           @@    ‚Äù
+# ECHO "    @@     D E C R Y P T E R     @@    ‚Äù
+# ECHO "    @@      KINGSLY / JATIN      @@    ‚Äù
+# ECHO "    @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@    ‚Äù
 # ECHO "                                         "
 # ECHO "[CODER SCRIPT ..........................]"
 # ECHO "                                         "
@@ -35,7 +33,7 @@
 ************************************************************
 * File name: Reader.h
 * Compiler: MS Visual Studio 2022
-* Course: CST 8152 ñ Compilers, Lab Section: [011, 012]
+* Course: CST 8152 ‚Äì Compilers, Lab Section: [011, 012]
 * Assignment: A12.
 * Date: Sep 01 2025
 * Professor: Paulo Sousa
@@ -68,11 +66,11 @@
 /* FUNCTIONS DECLARATION:  .................................. */
 
 /* General Operations */
-void vigenereFile(const decoder_strg inputFileName, const decoder_strg outputFileName, const decoder_strg key, decoder_intg encode);
-decoder_strg vigenereMem(const decoder_strg inputFileName, const decoder_strg key, decoder_intg encode);
+void vigenereFile(const en_strg inputFileName, const en_strg outputFileName, const en_strg key, en_int encode);
+en_strg vigenereMem(const en_strg inputFileName, const en_strg key, en_int encode);
 
-void cypher(const decoder_strg inputFileName, const decoder_strg outputFileName, const decoder_strg key);
-void decypher(const decoder_strg inputFileName, const decoder_strg outputFileName, const decoder_strg key);
-decoder_intg getSizeOfFile(const decoder_strg filename);
+void cypher(const en_strg inputFileName, const en_strg outputFileName, const en_strg key);
+void decypher(const en_strg inputFileName, const en_strg outputFileName, const en_strg key);
+en_int getSizeOfFile(const en_strg filename);
 
 #endif

@@ -1,6 +1,28 @@
-﻿# CMakeList.txt : CMake project for Decryptor, include source and define
-# project specific logic here.
+﻿#
+# CMakeList.txt : CMake project for Compilers, include source and define project specific logic here.
 #
+# ECHO "=---------------------------------------="
+# ECHO "|  COMPILERS - ALGONQUIN COLLEGE (F25)  |"
+# ECHO "=---------------------------------------="
+# ECHO "    @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@    ”
+# ECHO "    @@                           @@    ”
+# ECHO "    @@                           @@    ”
+# ECHO "    @@      @@@@@@@@@@@@@        @@    �"
+# ECHO "    @@      @@           @@      @@    �"
+# ECHO "    @@      @@            @@     @@    �"
+# ECHO "    @@      @@             @@    @@    �"
+# ECHO "    @@      @@             @@    @@    �"
+# ECHO "    @@      @@            @@     @@    �"
+# ECHO "    @@      @@           @@      @@    �"
+# ECHO "    @@      @@@@@@@@@@@@@        @@    �"
+# ECHO "    @@                           @@    ”
+# ECHO "    @@     D E C R Y P T E R     @@    ”
+# ECHO "    @@      KINGSLY / JATIN      @@    ”
+# ECHO "    @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@    ”
+# ECHO "                                         "
+# ECHO "[CODER SCRIPT ..........................]"
+# ECHO "                                         "
+
 cmake_minimum_required (VERSION 3.8)
 
 # Enable Hot Reload for MSVC compilers if supported.
