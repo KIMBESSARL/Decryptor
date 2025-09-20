@@ -106,12 +106,26 @@ en_int main1Coder(en_int argc, en_strg* argv) {
 	}
 	en_strg operation = "";
 	en_strg inputFileName = "";
-	en_strg key = "decoder";
+	en_strg key = STR_LANGNAME;
 	en_strg outputFileName = "";
-	if (argc > 4) {
+	if (argc > 4 ) {
+		
+		//en_strg key = argv[1];
 		operation = argv[2];
 		inputFileName = argv[3];
 		outputFileName = argv[4];
+
+
+		// Call the other operation in memory
+		en_int size = getSizeOfFile(outputFileName);
+		en_strg output;
+		if (atoi(operation) == CYPHER)
+			output = vigenereMem(outputFileName, key, DECYPHER);
+		else
+			output = vigenereMem(outputFileName, key, CYPHER);
+		printf("INPUT:\n\n%s\n", output);
+
+
 		// Call the appropriate function to file
 		if (atoi(operation) == CYPHER)
 			cypher(inputFileName, outputFileName, key);
@@ -121,15 +135,16 @@ en_int main1Coder(en_int argc, en_strg* argv) {
 			errorPrint("%s%s%s", "Error: Unknown operation ", operation, ". Use 'cypher' or 'decypher'.\n");
 			return EXIT_FAILURE;
 		}
-		printf("Operation '%s' completed successfully.\n", operation);
+		//printf("Operation '%s' completed successfully.\n\n", operation);
+		
 		// Call the other operation in memory
-		en_int size = getSizeOfFile(outputFileName);
+		/*en_int size = getSizeOfFile(outputFileName);
 		en_strg output;
 		if (atoi(operation) == CYPHER)
 			output = vigenereMem(outputFileName, key, DECYPHER);
 		else 
 			output = vigenereMem(outputFileName, key, CYPHER);
-		printf("OUTPUT:\n%s\n", output);
+		printf("INPUT:\n\n%s\n", output);*/
 	}
 	return EXIT_SUCCESS;
 }

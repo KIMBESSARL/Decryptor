@@ -44,6 +44,7 @@
 #ifndef COMPILERS_H_
 #define COMPILERS_H_
 
+
 #define DEBUG 0
 
 /*
@@ -58,7 +59,7 @@
 
 /* TO_DO: Adjust your language (cannot be "Sofia") */
 /* Language name */
-#define STR_LANGNAME	"encrypter"
+#define STR_LANGNAME	"Decrypter"
 
 /* Logical constants - adapt for your language */
 #define TRUE  1

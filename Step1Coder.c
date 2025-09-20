@@ -49,10 +49,11 @@
  * - Review the functions to use "Defensive Programming".
  *.............................................................................
  */
-
+#define _CRT_SECURE_NO_WARNINGS
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <errno.h>
 
 #ifndef COMPILERS_H_
 #include "Compilers.h"
@@ -62,6 +63,7 @@
 #include "Step1Coder.h"
 #endif
 
+
 // Function to perform the Vigenère cipher (encoding or decoding)
 void vigenereFile(const en_strg inputFileName, const en_strg outputFileName, const en_strg key, en_int encode) {
 	// TO_DO: Use defensive programming (checking files)
@@ -69,61 +71,68 @@ void vigenereFile(const en_strg inputFileName, const en_strg outputFileName, con
 	// TO_DO: Logic: check if it is encode / decode to change the char (using Vigenere algorithm) - next function
 	// TO_DO: Close the files
 
-
-    // Define the input and output files (ex: FILE* inputFile, FILE* outputFile
-    FILE* inputFile = fopen(inputFileName, "r");
-    // Open the output file for writing
-    FILE* outputFile = fopen(outputFileName, "w");
-
-    // Defensive programming: check if input file opened successfully
-    if (!inputFile) {
-        fprintf(stderr, "Error: Cannot open input file %s\n", inputFileName);
-        return;
-    }
-
-    // Defensive programming: check if output file opened successfully
-    if (!outputFile) {
-        fprintf(stderr, "Error: Cannot open output file %s\n", outputFileName);
-        fclose(inputFile); 
-        return;
-    }
-
-    // Get the length of the key
-    en_long keyLen = strlen(key);
-    // Index to track position in the key
-    en_long keyIndex = 0;
-    en_int varHold; // Variable to hold each character read from the input file
-
-    // Read each character from the input file until end-of-file
-    while ((varHold = fgetc(inputFile)) != EOF) {
-        // Check if the character is a letter
-        if (isalpha(varHold)) {
-            // Determine base character ('A' for uppercase, 'a' for lowercase)
-            char base = isupper(varHold) ? 'A' : 'a';
-            // Convert key character to uppercase and get its alphabetical index (0–25)
-            char keyChar = toupper(key[keyIndex % keyLen]) - 'A';
-
-            // If decoding, reverse the shift
-            if (!encode) keyChar = 26 - keyChar;
-
-            // Apply Vigenère cipher shift and wrap around alphabet
-            char newChar = (varHold - base + keyChar) % 26 + base;
-            // Write the encoded/decoded character to the output file
-            fputc(newChar, outputFile);
-
-            // Move to the next character in the key
-            keyIndex++;
+     // Defensive programming: check for valid input
+        if (inputFileName == NULL || outputFileName == NULL || key == NULL || strlen(key) == 0) {
+            fprintf(stderr, "Error: Invalid input/output file name or key.\n");
+            return;
         }
-        else {
-            // Non-alphabetic characters are written unchanged
-            fputc(varHold, outputFile);
-        }
-    }
 
-    // Close both files
-    fclose(inputFile);
-    fclose(outputFile);
-}
+        // Open input file for reading
+        FILE* inputFile = fopen(inputFileName, "r");
+        if (!inputFile) {
+            fprintf(stderr, "Error: Cannot open input file '%s': %s\n", inputFileName, strerror(errno));
+           
+            return;
+        }
+
+        // Open output file for writing
+        FILE* outputFile = fopen(outputFileName, "w");
+        if (!outputFile) {
+            fprintf(stderr, "Error: Cannot open output file '%s': %s\n", outputFileName, strerror(errno));
+            fclose(inputFile);
+            return;
+        }
+
+        en_long keyLen = (en_long) strlen(key);
+        en_long keyIndex = 0;
+        en_int varHold;
+
+        // Apply Vigenère cipher and write to output file
+        while ((varHold = fgetc(inputFile)) != EOF) {
+            if (varHold >= ASCII_START && varHold <= ASCII_END) {
+                char keyChar = key[keyIndex % keyLen];
+                en_int shift = keyChar % ASCII_RANGE;
+
+                if (!encode) shift = ASCII_RANGE - shift;
+
+                char newChar = ((varHold - ASCII_START + shift) % ASCII_RANGE) + ASCII_START;
+                fputc(newChar, outputFile);
+                keyIndex++;
+            }
+            else {
+                fputc(varHold, outputFile); // Preserve non-visible characters
+            }
+        }
+
+
+        fclose(inputFile);
+        fclose(outputFile);
+
+        // Display the output file content in the terminal
+        FILE* displayFile = fopen(outputFileName, "r");
+        if (!displayFile) {
+            fprintf(stderr, "Error: Cannot open output file '%s' for display.\n", outputFileName);
+            return;
+        }
+
+        printf("\n> type CODED / DECODED:\n\n");
+
+        while ((varHold = fgetc(displayFile)) != EOF) {
+            putchar(varHold);
+        }
+
+        fclose(displayFile);
+    }
 
 
 // Function to perform the Vigenère cipher (encoding or decoding)
@@ -137,7 +146,7 @@ en_strg vigenereMem(const en_strg inputFileName, const en_strg key, en_int encod
     // Open the input file
     FILE* file = fopen(inputFileName, "r");
     if (file == NULL) {
-        fprintf(stderr, "Error: Cannot open input file '%s'.\n", inputFileName);
+        fprintf(stderr, "Error: Cannot open input file '%s': %s\n", inputFileName, strerror(errno));
         return NULL;
     }
 
@@ -147,14 +156,14 @@ en_strg vigenereMem(const en_strg inputFileName, const en_strg key, en_int encod
     rewind(file);
 
     // Allocate memory for input text
-    en_strg inputText = (en_strg)malloc(fileSize + 1);
+   en_strg inputText = (en_strg)malloc(fileSize + 1);
     if (inputText == NULL) {
         fprintf(stderr, "Error: Memory allocation for input text failed.\n");
         fclose(file);
         return NULL;
     }
 
-    // Read file content into inputText
+	// Read file content into inputText and display in the terminal
     fread(inputText, 1, fileSize, file);
     inputText[fileSize] = '\0'; // Null-terminate
     fclose(file);
@@ -170,23 +179,23 @@ en_strg vigenereMem(const en_strg inputFileName, const en_strg key, en_int encod
     size_t keyLen = strlen(key);
     size_t keyIndex = 0;
 
-    // Vigenère cipher logic
+    // Vigenère cipher logic for visible ASCII characters
     for (size_t i = 0; i < fileSize; ++i) {
         en_char ch = inputText[i];
 
-        if (isalpha((unsigned char)ch)) {
-            en_char base = isupper((unsigned char)ch) ? 'A' : 'a';
-            en_char keyChar = toupper((unsigned char)key[keyIndex % keyLen]) - 'A';
+        if (ch >= ASCII_START && ch <= ASCII_END) {
+            en_char keyChar = key[keyIndex % keyLen];
+            en_int shift = keyChar % ASCII_RANGE;
 
             if (!encode) {
-                keyChar = 26 - keyChar; // Reverse shift for decoding
+                shift = ASCII_RANGE - shift;
             }
 
-            output[i] = (ch - base + keyChar) % 26 + base;
+            output[i] = ((ch - ASCII_START + shift) % ASCII_RANGE) + ASCII_START;
             keyIndex++;
         }
         else {
-            output[i] = ch; // Preserve non-alphabetic characters
+            output[i] = ch; // Preserve non-visible characters
         }
     }
 
