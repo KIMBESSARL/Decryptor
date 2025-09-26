@@ -77,17 +77,17 @@ NOTE: Some types may not be directly used by your language,
 */
 
 /* TO_DO: Define your typedefs */
-typedef char			en_char;
-typedef char*			en_strg;
-typedef int				en_int;
-typedef float			en_real;
-typedef void			en_void;
+typedef char			de_char;
+typedef char*			de_strg;
+typedef int				de_int;
+typedef float			de_real;
+typedef void			de_void;
 
-typedef unsigned char	en_boln;
-typedef unsigned char	en_byte;
+typedef unsigned char	de_boln;
+typedef unsigned char	de_byte;
 
-typedef long			en_long;
-typedef double			en_doub;
+typedef long			de_long;
+typedef double			de_doub;
 
 /*
 ------------------------------------------------------------
@@ -113,10 +113,10 @@ Main functions signatures
 (Code will be updated during next assignments)
 ------------------------------------------------------------
 */
-en_int main1Coder	(en_int argc, en_strg* argv);
+de_int main1Coder	(de_int argc, de_strg* argv);
 
-en_void printLogo();
-en_void errorPrint(en_strg fmt, ...);
+de_void printLogo();
+de_void errorPrint(de_strg fmt, ...);
 
 #endif
 

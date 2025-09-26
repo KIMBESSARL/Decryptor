@@ -102,29 +102,29 @@
 
 /* Offset declaration */
 typedef struct position {
-	sofia_intg wrte;					/* the offset to the add chars (in chars) */
-	sofia_intg read;					/* the offset to the get a char position (in chars) */
-	sofia_intg mark;					/* the offset to the mark position (in chars) */
+	de_int wrte;					/* the offset to the add chars (in chars) */
+	de_int read;					/* the offset to the get a char position (in chars) */
+	de_int mark;					/* the offset to the mark position (in chars) */
 } Position;
 
 /* Flags declaration */
 typedef struct flag {
-	sofia_boln isEmpty;					/* checks if there is no content */
-	sofia_boln isFull;					/* the content is using all size */
-	sofia_boln isRead;					/* all content was read */
-	sofia_boln isMoved;					/* the content was moved in reallocation */
+	de_boln isEmpty;					/* checks if there is no content */
+	de_boln isFull;					/* the content is using all size */
+	de_boln isRead;					/* all content was read */
+	de_boln isMoved;					/* the content was moved in reallocation */
 } Flag;
 
 /* Buffer structure */
 typedef struct bufferReader {
-	sofia_strg		content;			/* pointer to the beginning of character array (character buffer) */
-	sofia_intg		size;				/* current dynamic memory size (in bytes) allocated to character buffer */
-	sofia_real		factor;				/* factor for increase the buffer */
+	de_strg		content;			/* pointer to the beginning of character array (character buffer) */
+	de_int		size;				/* current dynamic memory size (in bytes) allocated to character buffer */
+	de_real		factor;				/* factor for increase the buffer */
 	Flag			flags;				/* contains character array reallocation flag and end-of-buffer flag */
 	Position		position;			/* Offset / position field */
-	sofia_intg		histogram[NCHAR];	/* Statistics of chars */
-	sofia_intg		numReaderErrors;	/* Number of errors from Reader */
-	sofia_intg		checkSum;			/* Sum of bytes(chars) */
+	de_int		histogram[NCHAR];	/* Statistics of chars */
+	de_int		numReaderErrors;	/* Number of errors from Reader */
+	de_int		checkSum;			/* Sum of bytes(chars) */
 } Buffer, * BufferPointer;
 
 /* FUNCTIONS DECLARATION:  .................................. */
@@ -132,26 +132,26 @@ typedef struct bufferReader {
 /* General Operations */
 BufferPointer	readerCreate(sofia_intg, sofia_real);
 BufferPointer	readerAddChar(BufferPointer const, sofia_char);
-sofia_boln		readerClear(BufferPointer const);
-sofia_boln		readerFree(BufferPointer const);
-sofia_boln		readerIsFull(BufferPointer const);
-sofia_boln		readerIsEmpty(BufferPointer const);
-sofia_boln		readerSetMark(BufferPointer const, sofia_intg);
-sofia_intg		readerPrint(BufferPointer const);
-sofia_intg		readerLoad(BufferPointer const, sofia_strg);
-sofia_boln		readerRecover(BufferPointer const);
-sofia_boln		readerRetract(BufferPointer const);
-sofia_boln		readerRestore(BufferPointer const);
-sofia_intg		readerChecksum(BufferPointer const);
+de_boln		readerClear(BufferPointer const);
+de_boln		readerFree(BufferPointer const);
+de_boln		readerIsFull(BufferPointer const);
+de_boln		readerIsEmpty(BufferPointer const);
+de_boln		readerSetMark(BufferPointer const, sofia_intg);
+de_int		readerPrint(BufferPointer const);
+de_int		readerLoad(BufferPointer const, sofia_strg);
+de_boln		readerRecover(BufferPointer const);
+de_boln		readerRetract(BufferPointer const);
+de_boln		readerRestore(BufferPointer const);
+de_int		readerChecksum(BufferPointer const);
 /* Getters */
-sofia_char		readerGetChar(BufferPointer const);
-sofia_strg		readerGetContent(BufferPointer const, sofia_intg);
-sofia_intg		readerGetPosRead(BufferPointer const);
-sofia_intg		readerGetPosWrte(BufferPointer const);
-sofia_intg		readerGetPosMark(BufferPointer const);
-sofia_intg		readerGetSize(BufferPointer const);
-sofia_void		readerPrintFlags(BufferPointer const);
-sofia_void		readerPrintStat(BufferPointer const);
-sofia_intg		readerNumErrors(BufferPointer const);
+de_char		readerGetChar(BufferPointer const);
+de_strg		readerGetContent(BufferPointer const, sofia_intg);
+de_int		readerGetPosRead(BufferPointer const);
+de_int		readerGetPosWrte(BufferPointer const);
+de_int		readerGetPosMark(BufferPointer const);
+de_int		readerGetSize(BufferPointer const);
+de_void		readerPrintFlags(BufferPointer const);
+de_void		readerPrintStat(BufferPointer const);
+de_int		readerNumErrors(BufferPointer const);
 
 #endif

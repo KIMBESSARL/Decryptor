@@ -65,7 +65,7 @@
 
 
 // Function to perform the Vigenère cipher (encoding or decoding)
-void vigenereFile(const en_strg inputFileName, const en_strg outputFileName, const en_strg key, en_int encode) {
+void vigenereFile(const de_strg inputFileName, const de_strg outputFileName, const de_strg key, de_int encode) {
 	// TO_DO: Use defensive programming (checking files)
 	// TO_DO: Define local variables
 	// TO_DO: Logic: check if it is encode / decode to change the char (using Vigenere algorithm) - next function
@@ -93,15 +93,15 @@ void vigenereFile(const en_strg inputFileName, const en_strg outputFileName, con
             return;
         }
 
-        en_long keyLen = (en_long) strlen(key);
-        en_long keyIndex = 0;
-        en_int varHold;
+        de_long keyLen = (de_long) strlen(key);
+        de_long keyIndex = 0;
+        de_int varHold;
 
         // Apply Vigenère cipher and write to output file
         while ((varHold = fgetc(inputFile)) != EOF) {
             if (varHold >= ASCII_START && varHold <= ASCII_END) {
                 char keyChar = key[keyIndex % keyLen];
-                en_int shift = keyChar % ASCII_RANGE;
+                de_int shift = keyChar % ASCII_RANGE;
 
                 if (!encode) shift = ASCII_RANGE - shift;
 
@@ -136,7 +136,7 @@ void vigenereFile(const en_strg inputFileName, const en_strg outputFileName, con
 
 
 // Function to perform the Vigenère cipher (encoding or decoding)
-en_strg vigenereMem(const en_strg inputFileName, const en_strg key, en_int encode) {
+de_strg vigenereMem(const de_strg inputFileName, const de_strg key, de_int encode) {
     // Defensive check for NULL inputFileName or key
     if (inputFileName == NULL || key == NULL || strlen(key) == 0) {
         fprintf(stderr, "Error: Invalid input file name or key.\n");
@@ -156,7 +156,7 @@ en_strg vigenereMem(const en_strg inputFileName, const en_strg key, en_int encod
     rewind(file);
 
     // Allocate memory for input text
-   en_strg inputText = (en_strg)malloc(fileSize + 1);
+   de_strg inputText = (de_strg)malloc(fileSize + 1);
     if (inputText == NULL) {
         fprintf(stderr, "Error: Memory allocation for input text failed.\n");
         fclose(file);
@@ -169,7 +169,7 @@ en_strg vigenereMem(const en_strg inputFileName, const en_strg key, en_int encod
     fclose(file);
 
     // Allocate memory for output string
-    en_strg output = (en_strg)malloc(fileSize + 1);
+    de_strg output = (de_strg)malloc(fileSize + 1);
     if (output == NULL) {
         fprintf(stderr, "Error: Memory allocation for output failed.\n");
         free(inputText);
@@ -181,11 +181,11 @@ en_strg vigenereMem(const en_strg inputFileName, const en_strg key, en_int encod
 
     // Vigenère cipher logic for visible ASCII characters
     for (size_t i = 0; i < fileSize; ++i) {
-        en_char ch = inputText[i];
+        de_char ch = inputText[i];
 
         if (ch >= ASCII_START && ch <= ASCII_END) {
-            en_char keyChar = key[keyIndex % keyLen];
-            en_int shift = keyChar % ASCII_RANGE;
+            de_char keyChar = key[keyIndex % keyLen];
+            de_int shift = keyChar % ASCII_RANGE;
 
             if (!encode) {
                 shift = ASCII_RANGE - shift;
@@ -207,12 +207,12 @@ en_strg vigenereMem(const en_strg inputFileName, const en_strg key, en_int encod
 
 
 // Function to encode (cypher)
-void cypher(const en_strg inputFileName, const en_strg outputFileName, const en_strg key) {
+void cypher(const de_strg inputFileName, const de_strg outputFileName, const de_strg key) {
     vigenereFile(inputFileName, outputFileName, key, CYPHER);
 }
 
 // Function to decode (decypher)
-void decypher(const en_strg inputFileName, const en_strg outputFileName, const en_strg key) {
+void decypher(const de_strg inputFileName, const de_strg outputFileName, const de_strg key) {
     vigenereFile(inputFileName, outputFileName, key, DECYPHER);
 }
 
@@ -220,8 +220,8 @@ void decypher(const en_strg inputFileName, const en_strg outputFileName, const e
 
 
 // Function to get the size of a file in bytes
-en_int getSizeOfFile(const en_strg filename) {
-    en_int size = 0;
+de_int getSizeOfFile(const de_strg filename) {
+    de_int size = 0;
 
     // Open the file in binary read mode
     FILE* file = fopen(filename, "rb");

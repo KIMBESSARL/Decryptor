@@ -2,25 +2,28 @@
 ************************************************************
 * COMPILERS COURSE - Algonquin College
 * Code version: Fall, 2025
-* Author: TO_DO
+* Author: Kingsly Mbekug / Jatin Bali
 * Professors: Paulo Sousa
 ************************************************************
 #
 # ECHO "=---------------------------------------="
 # ECHO "|  COMPILERS - ALGONQUIN COLLEGE (F25)  |"
 # ECHO "=---------------------------------------="
-# ECHO "    @@        @@@@@@@@@@@@@        @@    �"
-# ECHO "    @@        @           @@       @@    �"
-# ECHO "    @@        @            @@      @@    �"
-# ECHO "    @@        @             @@     @@    �"
-# ECHO "    @@        @             @@     @@    �"
-# ECHO "    @@        @            @@      @@    �"
-# ECHO "    @@        @           @@       @@    �"
-# ECHO "    @@        @@@@@@@@@@@@@        @@    �"
-# ECHO "    @@                             @@    ”
-# ECHO "    @@        D E C O D E R        @@    ”
-# ECHO "    @@                             @@    ”
-# ECHO "    @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@    ”
+# ECHO "    @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@    ”
+# ECHO "    @@                           @@    ”
+# ECHO "    @@                           @@    ”
+# ECHO "    @@      @@@@@@@@@@@@@        @@    ?"
+# ECHO "    @@      @@           @@      @@    ?"
+# ECHO "    @@      @@            @@     @@    ?"
+# ECHO "    @@      @@             @@    @@    ?"
+# ECHO "    @@      @@             @@    @@    ?"
+# ECHO "    @@      @@            @@     @@    ?"
+# ECHO "    @@      @@           @@      @@    ?"
+# ECHO "    @@      @@@@@@@@@@@@@        @@    ?"
+# ECHO "    @@                           @@    ”
+# ECHO "    @@     D E C R Y P T E R     @@    ”
+# ECHO "    @@      KINGSLY / JATIN      @@    ”
+# ECHO "    @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@    ”
 # ECHO "                                         "
 # ECHO "[CODER SCRIPT ..........................]"
 # ECHO "                                         "
@@ -99,26 +102,26 @@
 */
 
 // Main function to handle command-line arguments
-en_int main1Coder(en_int argc, en_strg* argv) {
+de_int main1Coder(de_int argc, de_strg* argv) {
 	if (argc < 5) {
 		printf("Usage: %s [cypher=1|decypher=0] <input_file> <output_file>\n", argv[0]);
 		return EXIT_FAILURE;
 	}
-	en_strg operation = "";
-	en_strg inputFileName = "";
-	en_strg key = STR_LANGNAME;
-	en_strg outputFileName = "";
+	de_strg operation = "";
+	de_strg inputFileName = "";
+	de_strg key = STR_LANGNAME;
+	de_strg outputFileName = "";
 	if (argc > 4 ) {
 		
-		//en_strg key = argv[1];
+		//de_strg key = argv[1];
 		operation = argv[2];
 		inputFileName = argv[3];
 		outputFileName = argv[4];
 
 
 		// Call the other operation in memory
-		en_int size = getSizeOfFile(outputFileName);
-		en_strg output;
+		de_int size = getSizeOfFile(outputFileName);
+		de_strg output;
 		if (atoi(operation) == CYPHER)
 			output = vigenereMem(outputFileName, key, DECYPHER);
 		else
@@ -138,8 +141,8 @@ en_int main1Coder(en_int argc, en_strg* argv) {
 		//printf("Operation '%s' completed successfully.\n\n", operation);
 		
 		// Call the other operation in memory
-		/*en_int size = getSizeOfFile(outputFileName);
-		en_strg output;
+		/*de_int size = getSizeOfFile(outputFileName);
+		de_strg output;
 		if (atoi(operation) == CYPHER)
 			output = vigenereMem(outputFileName, key, DECYPHER);
 		else 

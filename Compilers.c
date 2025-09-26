@@ -74,9 +74,9 @@
 *************************************************************
 */
 
-en_int main(int argc, char** argv) {
+de_int main(int argc, char** argv) {
 
-	en_int i;
+	de_int i;
 	printLogo();
 	if (DEBUG) {
 		for (i = 0; i < argc; ++i)
@@ -91,7 +91,7 @@ en_int main(int argc, char** argv) {
 			PGM_WRT, "] - Writer\n");
 		return EXIT_FAILURE;
 	}
-	en_char option = argv[1][0];
+	de_char option = argv[1][0];
 	switch (option) {
 	case PGM_CDR:
 		printf("%s%c%s", "\n[Option '", PGM_CDR, "': Starting CODER .....]\n\n");
@@ -122,7 +122,7 @@ en_int main(int argc, char** argv) {
 *************************************************************
 */
 
-en_void printLogo() {
+de_void printLogo() {
 	printf("%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s",
 		"\t=---------------------------------------=\n",
 		"\t|  COMPILERS - ALGONQUIN COLLEGE (S25)  |\n",
@@ -156,12 +156,12 @@ en_void printLogo() {
 ************************************************************
 */
 
-en_void errorPrint(en_strg fmt, ...) {
+de_void errorPrint(de_strg fmt, ...) {
 	/* Initialize variable list */
 	va_list ap;
 	va_start(ap, fmt);
 
-	(en_void)vfprintf(stderr, fmt, ap);
+	(de_void)vfprintf(stderr, fmt, ap);
 	va_end(ap);
 
 	/* Move to new line */

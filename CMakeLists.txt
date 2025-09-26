@@ -37,6 +37,7 @@ project ("Decryptor")
 add_executable (Decryptor  
 	"Compilers.h"		"Compilers.c"
 	"Step1Coder.h"		"Step1Coder.c"		"Main1Coder.c"
+	"Main2Reader.c"     "Step2Reader.c"     "Step2Reader.h"
  )
 if (CMAKE_VERSION VERSION_GREATER 3.12)
   set_property(TARGET Decryptor PROPERTY CXX_STANDARD 20)

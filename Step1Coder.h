@@ -2,7 +2,7 @@
 ************************************************************
 * COMPILERS COURSE - Algonquin College
 * Code version: Fall, 2025
-* Author: TO_DO
+* Author: Kingsly Mbekug / Jatin Bali
 * Professors: Paulo Sousa
 ************************************************************
 #
@@ -12,14 +12,14 @@
 # ECHO "    @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@    ”
 # ECHO "    @@                           @@    ”
 # ECHO "    @@                           @@    ”
-# ECHO "    @@      @@@@@@@@@@@@@        @@    �"
-# ECHO "    @@      @@           @@      @@    �"
-# ECHO "    @@      @@            @@     @@    �"
-# ECHO "    @@      @@             @@    @@    �"
-# ECHO "    @@      @@             @@    @@    �"
-# ECHO "    @@      @@            @@     @@    �"
-# ECHO "    @@      @@           @@      @@    �"
-# ECHO "    @@      @@@@@@@@@@@@@        @@    �"
+# ECHO "    @@      @@@@@@@@@@@@@        @@    ?"
+# ECHO "    @@      @@           @@      @@    ?"
+# ECHO "    @@      @@            @@     @@    ?"
+# ECHO "    @@      @@             @@    @@    ?"
+# ECHO "    @@      @@             @@    @@    ?"
+# ECHO "    @@      @@            @@     @@    ?"
+# ECHO "    @@      @@           @@      @@    ?"
+# ECHO "    @@      @@@@@@@@@@@@@        @@    ?"
 # ECHO "    @@                           @@    ”
 # ECHO "    @@     D E C R Y P T E R     @@    ”
 # ECHO "    @@      KINGSLY / JATIN      @@    ”
@@ -68,11 +68,11 @@
 /* FUNCTIONS DECLARATION:  .................................. */
 
 /* General Operations */
-void vigenereFile(const en_strg inputFileName, const en_strg outputFileName, const en_strg key, en_int encode);
-en_strg vigenereMem(const en_strg inputFileName, const en_strg key, en_int encode);
+void vigenereFile(const de_strg inputFileName, const de_strg outputFileName, const de_strg key, de_int encode);
+de_strg vigenereMem(const de_strg inputFileName, const de_strg key, de_int encode);
 
-void cypher(const en_strg inputFileName, const en_strg outputFileName, const en_strg key);
-void decypher(const en_strg inputFileName, const en_strg outputFileName, const en_strg key);
-en_int getSizeOfFile(const en_strg filename);
+void cypher(const de_strg inputFileName, const de_strg outputFileName, const de_strg key);
+void decypher(const de_strg inputFileName, const de_strg outputFileName, const de_strg key);
+de_int getSizeOfFile(const de_strg filename);
 
 #endif
