@@ -65,7 +65,7 @@
 
 /*
 ***********************************************************
-* Function name: readerCreate
+* Function name: readerCreate (1)
 * Purpose: Creates the buffer reader according to capacity, increment
 	factor and operational mode ('f', 'a', 'm')
 * Author: Svillen Ranev / Paulo Sousa
@@ -85,30 +85,52 @@
 *************************************************************
 */
 
-BufferPointer readerCreate(sofia_intg size, sofia_real factor) {
-	BufferPointer readerPointer = NULL;
-	/* TO_DO: Defensive programming: size */
-	/* TO_DO: readerPointer allocation */
-	/* TO_DO: Defensive programming: readerPointer */
-	readerPointer = calloc(1, sizeof(Buffer));
-	/* TO_DO: content allocation */
-	sofia_strg content = malloc(size);
-	if (readerPointer!=NULL && content!=NULL) {
-		readerPointer->content = content;
+BufferPointer readerCreate(de_int size, de_real factor) {
+	// Defensive programming: validate size
+	if (size <= 0) {
+		return NULL;
 	}
-	/* TO_DO: Defensive programming: content */
-	/* TO_DO: Initialize the histogram */
-	/* TO_DO: Initialize errors */
-	/* TO_DO: Update the properties */
-	/* TO_DO: Initialize flags */
-	/* TO_DO: The created flag must be signalized as EMP */
+	
+	// Allocate memory for the readerPointer
+	BufferPointer readerPointer = calloc(1, sizeof(Buffer));
+	if (readerPointer == NULL) {
+		return NULL;
+	}
+
+	// Allocate memory for content
+	de_strg content = malloc(size);
+	if (content == NULL) {
+		free(readerPointer); // Clean up previously allocated memory
+		return NULL;
+	}
+
+	// Assign content to readerPointer
+	readerPointer->content = content;
+
+	// Initialize histogram (assuming it's an array or struct)
+	memset(readerPointer->histogram, 0, sizeof(readerPointer->histogram));
+
+	// Initialize errors (assuming it's a counter or array)
+	readerPointer->numReaderErrors = 0;
+
+	// Update properties
+	readerPointer->size = size;
+	readerPointer->factor = factor;
+
+	// Initialize flags
+	readerPointer->flags = (Flag){0};
+
+	// Signal that the buffer was created successfully
+	readerPointer->flags.isEmpty =TRUE;  // or 1 if de_boln is int
+
+
 	return readerPointer;
 }
 
 
 /*
 ***********************************************************
-* Function name: readerAddChar
+* Function name: readerAddChar (2)
 * Purpose: Adds a char to buffer reader
 * Parameters:
 *   readerPointer = pointer to Buffer Reader
@@ -122,27 +144,60 @@ BufferPointer readerCreate(sofia_intg size, sofia_real factor) {
 *************************************************************
 */
 
-BufferPointer readerAddChar(BufferPointer const readerPointer, sofia_char ch) {
+BufferPointer readerAddChar(BufferPointer const readerPointer, de_char ch) {
 	de_strg tempReader = NULL;
 	de_int newSize = 0;
 	/* TO_DO: Defensive programming */
+	if (readerPointer == NULL || readerPointer->content == NULL) {
+		return NULL; // Defensive programming: invalid pointer
+	}
+
 	/* TO_DO: Test the inclusion of chars */
-	if (readerPointer->position.wrte * (sofia_intg)sizeof(sofia_char) < readerPointer->size) {
+	if (readerPointer->position.wrte * (de_int)sizeof(de_char) < readerPointer->size) {
 		/* TO_DO: Buffer not full: set flag */
+		readerPointer->flags.isFull = FALSE;
 	}
 	else {
 		/* TO_DO: Reset Full flag */
+		readerPointer->flags.isFull = TRUE;
 		/* TO_DO: Adjust the size to be duplicated */
+
+		newSize = readerPointer->size * 2;
+		tempReader = realloc(readerPointer->content, newSize);
+
 		/* TO_DO: Defensive programming */
+
+		if (tempReader == NULL) {
+			return NULL; // Defensive programming: realloc failed
+		}
+
+		readerPointer->content = tempReader;
+		readerPointer->size = newSize;
+		readerPointer->flags.isMoved = TRUE;
+		readerPointer->flags.isFull = FALSE; // Reset full flag after resize
+
 	}
 	/* TO_DO: Add the char */
+
+	readerPointer->content[readerPointer->position.wrte] = ch;
+	readerPointer->position.wrte++;
+
 	/* TO_DO: Updates histogram */
+
+		if (readerPointer->histogram != NULL) {
+			readerPointer->histogram[(de_int)ch]++;
+		}
+
+
+	// Update flags
+	readerPointer->flags.isEmpty = FALSE;
+
 	return readerPointer;
 }
 
 /*
 ***********************************************************
-* Function name: readerClear
+* Function name: readerClear(3)
 * Purpose: Clears the buffer reader
 * Parameters:
 *   readerPointer = pointer to Buffer Reader
@@ -156,14 +211,29 @@ BufferPointer readerAddChar(BufferPointer const readerPointer, sofia_char ch) {
 */
 de_boln readerClear(BufferPointer const readerPointer) {
 	/* TO_DO: Defensive programming */
+
+	if (readerPointer == NULL || readerPointer->content == NULL) {
+		return FALSE;
+	}
+
 	/* TO_DO: Adjust positions to zero */
+
+	readerPointer->position.wrte = 0;
+	readerPointer->position.read = 0;
+
 	/* TO_DO: Adjust flags original */
-	return SOFIA_FALSE;
+
+	readerPointer->flags.isEmpty = TRUE;
+	readerPointer->flags.isFull = FALSE;
+	readerPointer->flags.isRead = FALSE;
+	readerPointer->flags.isMoved = FALSE;
+
+	return TRUE;
 }
 
 /*
 ***********************************************************
-* Function name: readerFree
+* Function name: readerFree(4)
 * Purpose: Releases the buffer address
 * Parameters:
 *   readerPointer = pointer to Buffer Reader
@@ -177,13 +247,29 @@ de_boln readerClear(BufferPointer const readerPointer) {
 */
 de_boln readerFree(BufferPointer const readerPointer) {
 	/* TO_DO: Defensive programming */
+	if(readerPointer == NULL) {
+		return FALSE;
+	}
 	/* Free memory (buffer/content) */
-	return SOFIA_FALSE;
+
+// Free content
+	if (readerPointer->content != NULL) {
+		free(readerPointer->content);
+		readerPointer->content = NULL;
+	}
+
+	// Free the buffer itself
+	free(readerPointer);
+
+	return TRUE;
+
+
+	//return FALSE;
 }
 
 /*
 ***********************************************************
-* Function name: readerIsFull
+* Function name: readerIsFull(5)
 * Purpose: Checks if buffer reader is full
 * Parameters:
 *   readerPointer = pointer to Buffer Reader
@@ -197,14 +283,18 @@ de_boln readerFree(BufferPointer const readerPointer) {
 */
 de_boln readerIsFull(BufferPointer const readerPointer) {
 	/* TO_DO: Defensive programming */
+	if (readerPointer == NULL) {
+		return FALSE;
+	}
 	/* TO_DO: Check flag if buffer is FUL */
-	return SOFIA_FALSE;
+	return readerPointer->flags.isFull;
+	//return FALSE;
 }
 
 
 /*
 ***********************************************************
-* Function name: readerIsEmpty
+* Function name: readerIsEmpty(6)
 * Purpose: Checks if buffer reader is empty.
 * Parameters:
 *   readerPointer = pointer to Buffer Reader
@@ -218,13 +308,19 @@ de_boln readerIsFull(BufferPointer const readerPointer) {
 */
 de_boln readerIsEmpty(BufferPointer const readerPointer) {
 	/* TO_DO: Defensive programming */
-	/* TO_DO: Check flag if buffer is EMP */
-	return SOFIA_FALSE;
-}
+		if (readerPointer == NULL) {
+			return FALSE;
+		}
+
+		/* TO_DO: Check flag if buffer is EMP */
+		return readerPointer->flags.isEmpty;
+	}	
+//	return FALSE;
+//}
 
 /*
 ***********************************************************
-* Function name: readerSetMark
+* Function name: readerSetMark(7)
 * Purpose: Adjust the position of mark in the buffer
 * Parameters:
 *   readerPointer = pointer to Buffer Reader
@@ -237,16 +333,22 @@ de_boln readerIsEmpty(BufferPointer const readerPointer) {
 *	- Adjust for your LANGUAGE.
 *************************************************************
 */
-de_boln readerSetMark(BufferPointer const readerPointer, sofia_intg mark) {
+de_boln readerSetMark(BufferPointer const readerPointer, de_int mark) {
 	/* TO_DO: Defensive programming */
+	if (readerPointer == NULL || mark < 0 || mark >= readerPointer->size) {
+		return FALSE;
+	}
 	/* TO_DO: Adjust mark */
-	return SOFIA_FALSE;
+
+	readerPointer->position.mark = mark;
+	return TRUE;
+	//return FALSE;
 }
 
 
 /*
 ***********************************************************
-* Function name: readerPrint
+* Function name: readerPrint(8)
 * Purpose: Prints the string in the buffer.
 * Parameters:
 *   readerPointer = pointer to Buffer Reader
@@ -260,13 +362,27 @@ de_boln readerSetMark(BufferPointer const readerPointer, sofia_intg mark) {
 */
 de_int readerPrint(BufferPointer const readerPointer) {
 	/* TO_DO: Defensive programming (including invalid chars) */
+	de_int count = 0;
+	// Loop through the buffer content up to the write position
+	for (de_int i = 0; i < readerPointer->position.wrte; ++i) {
+		de_char ch = readerPointer->content[i];
+
+		// Skip invalid characters (e.g., CHARSEOF or non-printable)
+		if (ch == CHARSEOF || ch < 0 || ch > 127) {
+			continue;
+		}
 	/* TO_DO: Print the buffer content */
-	return 0;
+		putchar(ch);  // Print character to stdout
+		count++;
+	}
+
+	return count;
+	//return 0;
 }
 
 /*
 ***********************************************************
-* Function name: readerLoad
+* Function name: readerLoad(9)
 * Purpose: Loads the string in the buffer with the content of
 	an specific file.
 * Parameters:
@@ -280,16 +396,58 @@ de_int readerPrint(BufferPointer const readerPointer) {
 *	- Adjust for your LANGUAGE.
 *************************************************************
 */
-de_int readerLoad(BufferPointer const readerPointer, sofia_strg fileName) {
+de_int readerLoad(BufferPointer const readerPointer, de_strg fileName) {
 	/* TO_DO: Defensive programming */
+	if (readerPointer == NULL || fileName == NULL) {
+		return 0;
+	}
 	/* TO_DO: Loads the file */
+	de_strg loadedContent = vigenereMem(fileName, STR_LANGNAME, DECYPHER);
+	if (loadedContent == NULL) {
+		return 0; // Failed to load or decrypt
+	}
 	/* TO_DO: Creates the string calling vigenereMem(fileName, STR_LANGNAME, DECYPHER) */
-	return 0;
+	// Free existing content if needed
+	if (readerPointer->content != NULL) {
+		free(readerPointer->content);
+	}
+
+	// Assign new content
+	readerPointer->content = loadedContent;
+
+	// Update size and position
+	size_t length = strlen(loadedContent);
+	if (length > INT_MAX) {
+		// Handle overflow case (e.g., reject the file or truncate)
+		return 0;
+	}
+	readerPointer->size = (de_int)length;
+	readerPointer->position.wrte = readerPointer->size;
+	readerPointer->position.read = 0;
+	readerPointer->position.mark = 0;
+
+	// Update flags
+	readerPointer->flags.isEmpty = (readerPointer->size == 0) ? TRUE : FALSE;
+	readerPointer->flags.isFull = FALSE;
+	readerPointer->flags.isRead = FALSE;
+	readerPointer->flags.isMoved = FALSE;
+
+	// Update histogram
+	memset(readerPointer->histogram, 0, sizeof(readerPointer->histogram));
+	for (de_int i = 0; i < readerPointer->size; ++i) {
+		de_char ch = readerPointer->content[i];
+		if (ch >= 0 && ch < NCHAR) {
+			readerPointer->histogram[(de_int)ch]++;
+		}
+	}
+
+	return readerPointer->size;
 }
+
 
 /*
 ***********************************************************
-* Function name: readerRecover
+* Function name: readerRecover(10)
 * Purpose: Rewinds the buffer.
 * Parameters:
 *   readerPointer = pointer to Buffer Reader
@@ -303,8 +461,15 @@ de_int readerLoad(BufferPointer const readerPointer, sofia_strg fileName) {
 */
 de_boln readerRecover(BufferPointer const readerPointer) {
 	/* TO_DO: Defensive programming */
+	if (readerPointer == NULL) {
+		return FALSE;
+	}
 	/* TO_DO: Adjust read and mark to zero */
-	return SOFIA_FALSE;
+	readerPointer->position.read = 0;
+	readerPointer->position.mark = 0;
+
+	return TRUE;
+//	return FALSE;
 }
 
 
@@ -325,7 +490,7 @@ de_boln readerRecover(BufferPointer const readerPointer) {
 de_boln readerRetract(BufferPointer const readerPointer) {
 	/* TO_DO: Defensive programming */
 	/* TO_DO: Retract (return 1 pos read) */
-	return SOFIA_FALSE;
+	return FALSE;
 }
 
 
@@ -346,7 +511,7 @@ de_boln readerRetract(BufferPointer const readerPointer) {
 de_boln readerRestore(BufferPointer const readerPointer) {
 	/* TO_DO: Defensive programming */
 	/* TO_DO: Restore read to mark */
-	return SOFIA_TRUE;
+	return TRUE;
 }
 
 
@@ -387,7 +552,7 @@ de_char readerGetChar(BufferPointer const readerPointer) {
 *	- Adjust for your LANGUAGE.
 *************************************************************
 */
-de_strg readerGetContent(BufferPointer const readerPointer, sofia_intg pos) {
+de_strg readerGetContent(BufferPointer const readerPointer, de_int pos) {
 	/* TO_DO: Defensive programming */
 	/* TO_DO: Return content (string) */
 	return NULL;
@@ -469,8 +634,7 @@ de_int readerGetPosMark(BufferPointer const readerPointer) {
 *	- Check boundary conditions
 *	- Adjust for your LANGUAGE.
 *************************************************************
-*/
-de_int readerGetSize(BufferPointer const readerPointer) {
+*/de_int readerGetSize(BufferPointer const readerPointer) {
 	/* TO_DO: Defensive programming */
 	/* TO_DO: Return size */
 	return 0;
@@ -493,7 +657,7 @@ de_int readerGetSize(BufferPointer const readerPointer) {
 #define FLAGS_
 #undef FLAGS_
 #ifndef FLAGS_
-sofia_void readerPrintFlags(BufferPointer const readerPointer) {
+de_void readerPrintFlags(BufferPointer const readerPointer) {
 	/* TO_DO: Defensive programming */
 	if (!readerPointer)
 		return;

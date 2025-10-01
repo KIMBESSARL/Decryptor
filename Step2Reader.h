@@ -77,8 +77,10 @@
 
 #define READER_DEFAULT_SIZE		100			/* default initial buffer reader capacity */
 #define READER_DEFAULT_FACTOR	0.5f		/* default factor */
+#define HISTOGRAM_SIZE 256			/* size of the histogram array */
 
 /* TO_DO: Add your bit-masks constant definitions here */
+
 /*
 // BITS                             (    76543210)
 #define READER_DEFAULT_FLAG 0x00 	// (0b00000000) = (0x00)_16 = (000)_10
@@ -131,21 +133,21 @@ typedef struct bufferReader {
 
 /* General Operations */
 BufferPointer	readerCreate(sofia_intg, sofia_real);
-BufferPointer	readerAddChar(BufferPointer const, sofia_char);
+BufferPointer	readerAddChar(BufferPointer const, de_char);
 de_boln		readerClear(BufferPointer const);
 de_boln		readerFree(BufferPointer const);
 de_boln		readerIsFull(BufferPointer const);
 de_boln		readerIsEmpty(BufferPointer const);
-de_boln		readerSetMark(BufferPointer const, sofia_intg);
+de_boln		readerSetMark(BufferPointer const, de_int);
 de_int		readerPrint(BufferPointer const);
-de_int		readerLoad(BufferPointer const, sofia_strg);
+de_int		readerLoad(BufferPointer const, de_strg);
 de_boln		readerRecover(BufferPointer const);
 de_boln		readerRetract(BufferPointer const);
 de_boln		readerRestore(BufferPointer const);
 de_int		readerChecksum(BufferPointer const);
 /* Getters */
 de_char		readerGetChar(BufferPointer const);
-de_strg		readerGetContent(BufferPointer const, sofia_intg);
+de_strg		readerGetContent(BufferPointer const, de_int);
 de_int		readerGetPosRead(BufferPointer const);
 de_int		readerGetPosWrte(BufferPointer const);
 de_int		readerGetPosMark(BufferPointer const);

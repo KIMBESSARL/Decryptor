@@ -93,10 +93,10 @@
  *  Function declarations
  * -------------------------------------------------------------
  */
-sofia_void displayBuffer(BufferPointer ptr_Buffer);
-sofia_long getFileSize(sofia_strg fname);
-sofia_intg isNumber(const sofia_strg ns);
-sofia_void startReader(sofia_strg, sofia_strg, sofia_intg, sofia_real);
+de_void displayBuffer(BufferPointer ptr_Buffer);
+de_long getFileSize(de_strg fname);
+de_int isNumber(const de_strg ns);
+de_void startReader(de_strg, de_strg, de_int, de_real);
 
 /*
 ************************************************************
@@ -108,13 +108,13 @@ sofia_void startReader(sofia_strg, sofia_strg, sofia_intg, sofia_real);
 ************************************************************
 */
 
-sofia_intg main2Reader(sofia_intg argc, sofia_strg* argv) {
+de_int main2Reader(de_int argc, de_strg* argv) {
 
 	/* Create source input buffer */
-	sofia_strg program = argv[0];
-	sofia_strg input = argv[2];
-	sofia_intg size = 0;
-	sofia_real factor = 0.0f;
+	de_strg program = argv[0];
+	de_strg input = argv[2];
+	de_int size = 0;
+	de_real factor = 0.0f;
 	/* Missing file name or/and mode parameter */
 	if (argc <= 2) {
 		errorPrint("\nDate: %s  Time: %s", __DATE__, __TIME__);
@@ -141,10 +141,10 @@ sofia_intg main2Reader(sofia_intg argc, sofia_strg* argv) {
 *	- Increment: buffer increment.
 ************************************************************
 */
-sofia_void startReader(sofia_strg program, sofia_strg input, sofia_intg size, sofia_real factor) {
+de_void startReader(de_strg program, de_strg input, de_int size, de_real factor) {
 
 	BufferPointer bufferp;		/* pointer to Buffer structure */
-	sofia_intg loadSize = 0;	/* the size of the file loaded in the buffer */
+	de_int loadSize = 0;	/* the size of the file loaded in the buffer */
 
 	/* Create buffer */
 	bufferp = readerCreate(READER_DEFAULT_SIZE, READER_DEFAULT_FACTOR);
@@ -192,9 +192,9 @@ sofia_void startReader(sofia_strg program, sofia_strg input, sofia_intg size, so
 ************************************************************
 */
 
-sofia_long getFileSize(sofia_strg fname) {
+de_long getFileSize(de_strg fname) {
 	FILE* input;
-	sofia_long flength;
+	de_long flength;
 	input = fopen(fname, "r");
 	if (input == NULL) {
 		errorPrint("%s%s", "Cannot open file: ", fname);
@@ -216,8 +216,8 @@ sofia_long getFileSize(sofia_strg fname) {
 ************************************************************
 */
 
-sofia_intg isNumber(const sofia_strg ns) {
-	sofia_char c; sofia_intg i = 0;
+de_int isNumber(const de_strg ns) {
+	de_char c; de_int i = 0;
 	if (ns == NULL) return 0;
 	while ((c = ns[i++]) == 0) {
 		if (!isdigit(c)) return 0;
@@ -232,7 +232,7 @@ sofia_intg isNumber(const sofia_strg ns) {
 *	- Params: buffer to print all properties.
 ************************************************************
 */
-sofia_void displayBuffer(BufferPointer ptr_Buffer) {
+de_void displayBuffer(BufferPointer ptr_Buffer) {
 	printf("\nPrinting buffer parameters:\n\n");
 	printf("The size of the buffer is:  %d\n",
 		readerGetSize(ptr_Buffer));
