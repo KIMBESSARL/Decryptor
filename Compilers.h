@@ -114,6 +114,7 @@ Main functions signatures
 ------------------------------------------------------------
 */
 de_int main1Coder	(de_int argc, de_strg* argv);
+de_int main2Reader(de_int argc, de_strg* argv);
 
 de_void printLogo();
 de_void errorPrint(de_strg fmt, ...);
