@@ -28,6 +28,17 @@
 # ECHO "[CODER SCRIPT ..........................]"
 # ECHO "                                         "
 */
+/*
+***********************************************************
+* File name: Reader.c
+* Compiler: MS Visual Studio 2022
+* Course: CST 8152 – Compilers, Lab Section: [011, 012, 013]
+* Assignment: A12.
+* Date: Jan 01 2025
+* Professor: Paulo Sousa
+* Purpose: This file is the main code for Buffer/Reader (A12)
+************************************************************
+*/
 
 /*
 ************************************************************
