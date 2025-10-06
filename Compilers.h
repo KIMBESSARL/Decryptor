@@ -77,7 +77,7 @@ NOTE: Some types may not be directly used by your language,
 */
 
 /* TO_DO: Define your typedefs */
-typedef char			de_char;
+typedef unsigned char			de_char;
 typedef char*			de_strg;
 typedef int				de_int;
 typedef float			de_real;
@@ -114,6 +114,7 @@ Main functions signatures
 ------------------------------------------------------------
 */
 de_int main1Coder	(de_int argc, de_strg* argv);
+de_int main2Reader(de_int argc, de_strg* argv);
 
 de_void printLogo();
 de_void errorPrint(de_strg fmt, ...);

@@ -99,6 +99,7 @@ de_int main(int argc, char** argv) {
 		break;
 	case PGM_RDR:
 		printf("%s%c%s", "\n[Option '", PGM_RDR, "': Starting READER .....]\n\n");
+		printf("%s%c%s", "\n[Option '", PGM_RDR, "': Starting CODER .....]\n\n");
 		main2Reader(argc, argv);
 		break;
 	default:
