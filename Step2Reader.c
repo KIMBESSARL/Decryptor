@@ -1,4 +1,4 @@
-/*
+Ôªø/*
 ************************************************************
 * COMPILERS COURSE - Algonquin College
 * Code version: Fall, 2025
@@ -9,9 +9,9 @@
 # ECHO "=---------------------------------------="
 # ECHO "|  COMPILERS - ALGONQUIN COLLEGE (F25)  |"
 # ECHO "=---------------------------------------="
-# ECHO "    @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@    î
-# ECHO "    @@                           @@    î
-# ECHO "    @@                           @@    î
+# ECHO "    @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@    ‚Äù
+# ECHO "    @@                           @@    ‚Äù
+# ECHO "    @@                           @@    ‚Äù
 # ECHO "    @@      @@@@@@@@@@@@@        @@    ?"
 # ECHO "    @@      @@           @@      @@    ?"
 # ECHO "    @@      @@            @@     @@    ?"
@@ -20,10 +20,10 @@
 # ECHO "    @@      @@            @@     @@    ?"
 # ECHO "    @@      @@           @@      @@    ?"
 # ECHO "    @@      @@@@@@@@@@@@@        @@    ?"
-# ECHO "    @@                           @@    î
-# ECHO "    @@     D E C R Y P T E R     @@    î
-# ECHO "    @@      KINGSLY / JATIN      @@    î
-# ECHO "    @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@    î
+# ECHO "    @@                           @@    ‚Äù
+# ECHO "    @@     D E C R Y P T E R     @@    ‚Äù
+# ECHO "    @@      KINGSLY / JATIN      @@    ‚Äù
+# ECHO "    @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@    ‚Äù
 # ECHO "                                         "
 # ECHO "[CODER SCRIPT ..........................]"
 # ECHO "                                         "
@@ -32,7 +32,7 @@
 ***********************************************************
 * File name: Reader.c
 * Compiler: MS Visual Studio 2022
-* Course: CST 8152 ñ Compilers, Lab Section: [011, 012, 013]
+* Course: CST 8152 ‚Äì Compilers, Lab Section: [011, 012, 013]
 * Assignment: A12.
 * Date: Jan 01 2025
 * Professor: Paulo Sousa
@@ -280,7 +280,7 @@ de_int readerPrint(BufferPointer const readerPointer) {
     for (de_int i = 0; i < readerPointer->position.wrte; ++i) {
         de_char ch = readerPointer->content[i];
         if (isprint(ch)) putchar(ch);
-        else printf("\\x%02X", (unsigned char)ch);
+        //else printf("\\x%02X", (unsigned char)ch);
         count++;
     }
     printf("\n");
@@ -326,6 +326,12 @@ de_int readerLoad(BufferPointer const readerPointer, de_strg fileName) {
 
     readerPointer->content = decryptedContent;
     readerPointer->size = (de_int)strlen(decryptedContent);
+
+//    // Ensure null termination within buffer size
+//if (readerPointer->size >= readerPointer->size_allocated)
+//    readerPointer->content[readerPointer->size - 1] = '\0';
+//else
+//    readerPointer->content[readerPointer->size] = '\0';
     readerPointer->position.wrte = readerPointer->size;
     readerPointer->position.read = 0;
     readerPointer->position.mark = 0;

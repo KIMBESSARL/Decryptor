@@ -144,7 +144,7 @@ de_strg vigenereMem(const de_strg inputFileName, const de_strg key, de_int encod
     }
 
     // Open the input file
-    FILE* file = fopen(inputFileName, "r");
+    FILE* file = fopen(inputFileName, "rb");
     if (file == NULL) {
         fprintf(stderr, "Error: Cannot open input file '%s': %s\n", inputFileName, strerror(errno));
         return NULL;
@@ -156,21 +156,26 @@ de_strg vigenereMem(const de_strg inputFileName, const de_strg key, de_int encod
     rewind(file);
 
     // Allocate memory for input text
-   de_strg inputText = (de_strg)malloc(fileSize + 1);
+    de_strg inputText = (de_strg)calloc(fileSize + 1, sizeof(de_char));
     if (inputText == NULL) {
         fprintf(stderr, "Error: Memory allocation for input text failed.\n");
         fclose(file);
         return NULL;
     }
 
-	// Read file content into inputText and display in the terminal
-    fread(inputText, 1, fileSize, file);
-    inputText[fileSize] = '\0'; // Null-terminate
+    // ✅ Capture the exact number of bytes actually read
+    size_t bytesRead = fread(inputText, 1, fileSize, file);
     fclose(file);
+    inputText[bytesRead] = '\0'; // ✅ terminate at the true end
+
+	//// Read file content into inputText and display in the terminal
+ //   fread(inputText, 1, fileSize, file);
+ //   inputText[fileSize] = '\0'; // Null-terminate
+ //   fclose(file);
 
     // Allocate memory for output string
-    de_strg output = (de_strg)malloc(fileSize + 1);
-    if (output == NULL) {
+    de_strg output = (de_strg)calloc(bytesRead + 1, sizeof(de_char)); // ✅ zero-init output
+    if (!output) {
         fprintf(stderr, "Error: Memory allocation for output failed.\n");
         free(inputText);
         return NULL;
@@ -199,7 +204,7 @@ de_strg vigenereMem(const de_strg inputFileName, const de_strg key, de_int encod
         }
     }
 
-    output[fileSize] = '\0'; // Null-terminate output
+    output[bytesRead] = '\0'; //end safely
 
     free(inputText); // Clean up inputText memory
     return output;

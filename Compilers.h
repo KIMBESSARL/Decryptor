@@ -77,7 +77,7 @@ NOTE: Some types may not be directly used by your language,
 */
 
 /* TO_DO: Define your typedefs */
-typedef unsigned char			de_char;
+typedef unsigned char	de_char;
 typedef char*			de_strg;
 typedef int				de_int;
 typedef float			de_real;
