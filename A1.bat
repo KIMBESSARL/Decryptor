@@ -14,14 +14,14 @@ echo '--------------------------------------------'
 echo '-  [A1: Coder - Team: Kingsly / Jatin    -'
 echo '--------------------------------------------'
 set "arg=%1"
-set "param=2"
-if "%arg%"=="" set "arg=A1DEC.txt"
- del A1DEC.txt RESTORED.txt
-gcc compilers.c main1coder.c step1coder.c -o Decryptor
+set "param=1"
+if "%arg%"=="" set "arg=CODED.txt"
+ del CODED.txt RESTORED.txt
+gcc compilers.c main1coder.c step1coder.c main2reader.c step2reader.c -o Decryptor
 timeout /t 1 /nobreak >nul 
- Decryptor 1 1 A1MESS.txt %arg% > out.txt 2> err.txt
+ Decryptor 1 1 README.txt %arg% > out.txt 2> err.txt
 ::timeout /t 1 /nobreak >nul
-Decryptor %param% %arg% > out.txt 2> err.txt
+::Decryptor %param% %arg% > out.txt 2> err.txt
 timeout /t 1 /nobreak >nul
 dir out.txt err.txt
 type out.txt

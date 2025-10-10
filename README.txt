@@ -1,2 +1,11 @@
-the link to our Assignment N1 
-https://github.com/KIMBESSARL/Decryptor
+# Sofia Example
+  The program is "lexically" correct
+  and should not generate any error #
+int main&() {
+	data {
+	}
+	code {
+		print&("Hello world!");
+		return 0;
+	}
+}

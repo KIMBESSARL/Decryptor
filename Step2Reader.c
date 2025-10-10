@@ -275,17 +275,30 @@ de_boln readerSetMark(BufferPointer const readerPointer, de_int mark) {
 */
 
 de_int readerPrint(BufferPointer const readerPointer) {
-    if (!readerPointer || !readerPointer->content) return 0;
+    if (!readerPointer || !readerPointer->content)
+        return 0;
+
     de_int count = 0;
     for (de_int i = 0; i < readerPointer->position.wrte; ++i) {
         de_char ch = readerPointer->content[i];
-        if (isprint(ch)) putchar(ch);
-        //else printf("\\x%02X", (unsigned char)ch);
+
+        // Stop if null terminator is reached
+        if (ch == '\0')
+            break;
+
+        // Keep structure (tabs/newlines) and printable characters
+        if (isprint(ch) || ch == '\n' || ch == '\r' || ch == '\t')
+            putchar(ch);
+        else
+            printf("\\x%02X", (unsigned char)ch);  // For debugging invisible chars
+
         count++;
     }
-    printf("\n");
+
     return count;
 }
+
+
 
 /*
 ***********************************************************
