@@ -158,7 +158,7 @@ de_void startReader(de_strg program, de_strg input, de_int size, de_real factor)
 	de_int loadSize = 0;	/* the size of the file loaded in the buffer */
 
 	/* Create buffer */
-	bufferp = readerCreate(READER_DEFAULT_SIZE, READER_DEFAULT_FACTOR);
+	bufferp = readerCreate(READER_DEFAULT_SIZE, READER_DEFAULT_FACTOR, MODE_MULTI);
 
 	if (bufferp == NULL) {
 		errorPrint("%s%s", program, ": Cannot allocate buffer - Use: buffer <input>.");

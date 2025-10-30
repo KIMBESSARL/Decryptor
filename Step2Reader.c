@@ -85,7 +85,7 @@
  *************************************************************
  */
 
-BufferPointer readerCreate(de_int size, de_real factor) {
+BufferPointer readerCreate(de_int size, de_real factor, de_int mode){
     if (size <= 0) return NULL;
 
     BufferPointer readerPointer = calloc(1, sizeof(Buffer));
@@ -340,11 +340,7 @@ de_int readerLoad(BufferPointer const readerPointer, de_strg fileName) {
     readerPointer->content = decryptedContent;
     readerPointer->size = (de_int)strlen(decryptedContent);
 
-//    // Ensure null termination within buffer size
-//if (readerPointer->size >= readerPointer->size_allocated)
-//    readerPointer->content[readerPointer->size - 1] = '\0';
-//else
-//    readerPointer->content[readerPointer->size] = '\0';
+
     readerPointer->position.wrte = readerPointer->size;
     readerPointer->position.read = 0;
     readerPointer->position.mark = 0;
@@ -636,4 +632,10 @@ de_int readerChecksum(BufferPointer readerPointer) {
     for (de_int i = 0; i < readerPointer->position.wrte; ++i)
         checksum += (de_int)readerPointer->content[i];
     return checksum;
+}
+/* in Step2Reader.c */
+de_char readerGetCharAt(BufferPointer const readerPointer, de_int index) {
+    if (!readerPointer || !readerPointer->content) return CHARSEOF;
+    if (index < 0 || index >= readerPointer->position.wrte) return CHARSEOF;
+    return readerPointer->content[index];
 }

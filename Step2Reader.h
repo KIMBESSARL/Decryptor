@@ -70,6 +70,9 @@
 #define READER_ERROR		(-1)		/* General error message */
 #define READER_TERMINATOR	'\0'		/* General EOF */
 
+#define READER_DEFAULT_INCREMENT 15
+#define MODE_MULTI 'm'
+
 /* CONSTANTS DEFINITION: PREFIXED BY LANGUAGE NAME .................................. */
 
 /* You should add your own constant definitions here */
@@ -132,7 +135,7 @@ typedef struct bufferReader {
 /* FUNCTIONS DECLARATION:  .................................. */
 
 /* General Operations */
-BufferPointer	readerCreate(de_int, de_real);
+BufferPointer	readerCreate(de_int, de_real, de_int);
 BufferPointer	readerAddChar(BufferPointer const, de_char);
 de_boln		readerClear(BufferPointer const);
 de_boln		readerFree(BufferPointer const);
@@ -155,5 +158,7 @@ de_int		readerGetSize(BufferPointer const);
 de_void		readerPrintFlags(BufferPointer const);
 de_void		readerPrintStat(BufferPointer const);
 de_int		readerNumErrors(BufferPointer const);
+/* in Step2Reader.h */
+de_char readerGetCharAt(BufferPointer const readerPointer, de_int index);
 
 #endif
