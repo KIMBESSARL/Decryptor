@@ -276,7 +276,7 @@ de_void displayScanner(BufferPointer ptrBuffer) {
 	printf("\nPrinting buffer parameters:\n\n");
 	printf("The capacity of the buffer is:  %d\n", readerGetSize(ptrBuffer));
 	printf("The current size of the buffer is:  %d\n", readerGetPosWrte(ptrBuffer));
-	//printf("\nPrinting buffer contents:\n\n");
+	printf("\nPrinting buffer contents:\n\n");
 	readerRecover(ptrBuffer);
 	readerPrint(ptrBuffer);
 }
