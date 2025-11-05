@@ -144,10 +144,6 @@ de_int main3Scanner(de_int argc, de_strg* argv) {
 	printf("%s%d%s", "[Debug mode: ", DEBUG, "]\n");
 
 	/* Create a source code input buffer - multiplicative mode */
-
-	//BufferPointer readerCreate(de_int size, de_real increment, de_int mode);
-	//sourceBuffer = readerCreate(READER_DEFAULT_SIZE, READER_DEFAULT_INCREMENT);
-	/* Create a source code input buffer - multiplicative mode */
 	sourceBuffer = readerCreate(READER_DEFAULT_SIZE, READER_DEFAULT_INCREMENT, MODE_MULTI);
 
 	if (sourceBuffer == NULL) {
@@ -172,19 +168,14 @@ de_int main3Scanner(de_int argc, de_strg* argv) {
 		exit(EXIT_FAILURE);
 	}
 
-
 	/* Load file contents into buffer */
 	loadSize = readerLoad(sourceBuffer, filename);
 	if (loadSize == READER_ERROR) {
 		printScannerError("%s%s", argv[0], ": Error loading file");
 		exit(EXIT_FAILURE);
 	}
-
 	/* Close file */
 	fclose(fileHandler);
-
-
-
 
 
 	/* Find the size of the file */
@@ -200,45 +191,90 @@ de_int main3Scanner(de_int argc, de_strg* argv) {
 		}
 	}
 
-	/* Create string Literal Table */
-	stringLiteralTable = readerCreate(READER_DEFAULT_SIZE, READER_DEFAULT_INCREMENT, MODE_MULTI);
-	
-	if (stringLiteralTable == NULL) {
-		printScannerError("%s%s", argv[0], ": Could not create string literals buffer");
-		exit(EXIT_FAILURE);
-	}
 
-	/* Testbed for the scanner and add SEOF to input program buffer*/
-	/* Initialize scanner input buffer */
-	readerRecover(sourceBuffer);
-	if (!startScanner(sourceBuffer)) {
-		printScannerError("%s%s", argv[0], ": Empty program buffer - scanning canceled");
-		exit(EXIT_FAILURE);
+	if (argc < 2) {
+		fprintf(stderr, "Usage: %s <source file>\n", argv[0]);
+		return EXIT_FAILURE;
 	}
-
-	printf("\nScanning source file...\n\n");
+	printf("\n");
+	printf("\nScanning source file...\n");
 	printf("Token\t\tAttribute\n");
 	printf("----------------------------------\n");
 
-	do {
+	/* 1?? Create source buffer */
+	sourceBuffer = readerCreate(READER_DEFAULT_SIZE, READER_DEFAULT_INCREMENT, MODE_MULTI);
+	if (!sourceBuffer) {
+		fprintf(stderr, "Could not create source buffer\n");
+		exit(EXIT_FAILURE);
+	}
+	/* 2?? Load source file */
+	if (!readerLoad(sourceBuffer, argv[2])) {
+		fprintf(stderr, "Could not load source file\n");
+		exit(EXIT_FAILURE);
+	}
+
+	/* 3?? Add SEOF marker and reset reader */
+	readerAddChar(sourceBuffer, '\0');
+	//readerRecover(sourceBuffer);
+
+	if (startScanner(sourceBuffer) != EXIT_SUCCESS) {
+		printf("Scanner initialization failed.\n");
+		exit(EXIT_FAILURE);
+	}do {
 		currentToken = tokenizer();
-		printToken(currentToken); // This should print token name and attribute
+		printToken(currentToken);
 	} while (currentToken.code != SEOF_T);
 
+
+	//stringLiteralTable = readerCreate(READER_DEFAULT_SIZE, READER_DEFAULT_INCREMENT, MODE_MULTI);
+	//if (!stringLiteralTable) {
+	//	printScannerError("%s%s", argv[0], ": Could not create string literals buffer");
+	//	exit(EXIT_FAILURE);
+	//}
+
+	//if (!readerLoad(sourceBuffer, argv[2])) {
+	//	printScannerError("%s%s", argv[0], ": Could not load source file");
+	//	exit(EXIT_FAILURE);
+	//}
+
+	//readerAddChar(sourceBuffer, '\0');
+	//printf("Buffer first char: '%c'\n", sourceBuffer->content[0]);
+	//printf("Buffer size: %d\n", sourceBuffer->position.wrte);
+
+
+	//if (!readerLoad(sourceBuffer, argv[2])) { // argv[1] = input file
+	//	printScannerError("%s%s", argv[0], ": Could not load source file");
+	//	exit(EXIT_FAILURE);
+	//}
+
+	//printf("Buffer size = %d\n", sourceBuffer->position.wrte);
+
+	
 	/* Print String Literal Table if not empty */
+/* Initialize string literal table before scanning */
+	stringLiteralTable = readerCreate(READER_DEFAULT_SIZE, READER_DEFAULT_INCREMENT, MODE_MULTI);
+
+
+	/* After scanning is complete */
 	printf("\nPrinting string table...\n");
 	printf("----------------------------------\n");
-	if (readerGetPosWrte(stringLiteralTable)) {
+	if (readerGetPosWrte(stringLiteralTable) > 0) {
 		readerPrint(stringLiteralTable);
 	}
 	printf("\n----------------------------------\n");
-	readerRestore(sourceBuffer); //xxx
-	readerRestore(stringLiteralTable); //xxx
-	sourceBuffer = stringLiteralTable = NULL;
+
+	/* Restore buffers (if needed for re-scanning or debugging) */
+	readerRestore(sourceBuffer);
+	readerRestore(stringLiteralTable);
+
+	/* Free buffers to release memory */
+	readerFree(sourceBuffer);
+	readerFree(stringLiteralTable);
+
+	/* Print scanner statistics */
 	printScannerData(scData);
+
 	//printScannerStatistics();
-	/* Ass2 evaluation only */
-	//if (argv[3] != NULL && *argv[3] == 'l')
 	if (argc > 3 && argv[3][0] == 'l')
 		printf("The number of lines is: %d\n", line);
 

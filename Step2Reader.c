@@ -108,6 +108,8 @@ BufferPointer readerCreate(de_int size, de_real factor, de_int mode){
     readerPointer->position.wrte = 0;
     readerPointer->position.read = 0;
     readerPointer->position.mark = 0;
+    readerPointer->factor = (de_real)factor;
+
 
     return readerPointer;
 }
@@ -394,14 +396,26 @@ de_boln readerRecover(BufferPointer const readerPointer) {
 *	- Adjust for your LANGUAGE.
 *************************************************************
 */
+
 de_boln readerRetract(BufferPointer const readerPointer) {
     if (!readerPointer || !readerPointer->content) return FALSE;
     if (readerPointer->position.read > 0) {
         readerPointer->position.read--;
+       // printf("[DEBUG] readerRetract: new pos=%d\n", readerPointer->position.read);
         return TRUE;
     }
     return FALSE;
 }
+
+
+//de_boln readerRetract(BufferPointer const readerPointer) {
+//    if (!readerPointer || !readerPointer->content) return FALSE;
+//    if (readerPointer->position.read > 0) {
+//        readerPointer->position.read--;
+//        return TRUE;
+//    }
+//    return FALSE;
+//}
 
 /*
 ***********************************************************
@@ -442,10 +456,20 @@ de_boln readerRestore(BufferPointer const readerPointer) {
 de_char readerGetChar(BufferPointer const readerPointer) {
     if (!readerPointer || !readerPointer->content) return CHARSEOF;
     if (readerPointer->position.read >= readerPointer->position.wrte) return CHARSEOF;
-    de_char ch = readerPointer->content[readerPointer->position.read++];
+    de_char ch = readerPointer->content[readerPointer->position.read];
+    //printf("[DEBUG] readerGetChar: char='%c' at pos=%d\n", ch, readerPointer->position.read);
+    readerPointer->position.read++;
     readerPointer->flags.isRead = TRUE;
     return ch;
 }
+
+//de_char readerGetChar(BufferPointer const readerPointer) {
+//    if (!readerPointer || !readerPointer->content) return CHARSEOF;
+//    if (readerPointer->position.read >= readerPointer->position.wrte) return CHARSEOF;
+//    de_char ch = readerPointer->content[readerPointer->position.read++];
+//    readerPointer->flags.isRead = TRUE;
+//    return ch;
+//}
 
 /*
 ***********************************************************
@@ -639,3 +663,4 @@ de_char readerGetCharAt(BufferPointer const readerPointer, de_int index) {
     if (index < 0 || index >= readerPointer->position.wrte) return CHARSEOF;
     return readerPointer->content[index];
 }
+

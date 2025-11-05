@@ -69,52 +69,27 @@
 #define MODE_ADDIT 0
 //#define MODE_MULTI 2
 
+
 #define RTE_CODE 1  /* Value for run-time error */
 
 /* TO_DO: Define the number of tokens */
-#define NUM_TOKENS 16
+#define NUM_TOKENS 17
 
 /* TO_DO: Define Token codes - Create your token classes */
 
+
 enum TOKENS {
-	ERR_T,		/*  0: Error token */
-	MNID_T,		/*  1: Method name identifier token (start: &) */
-	INL_T,		/*  2: Integer literal token */
-	STR_T,		/*  3: String literal token */
-	LPR_T,		/*  4: Left parenthesis token */
-	RPR_T,		/*  5: Right parenthesis token */
-	LBR_T,		/*  6: Left brace token */
-	RBR_T,		/*  7: Right brace token */
-	KW_T,		/*  8: Keyword token */
-	EOS_T,		/*  9: End of statement (semicolon) */
-	RTE_T,		/* 10: Run-time error token */
-	SEOF_T,		/* 11: Source end-of-file token */
-	CMT_T,		/* 12: Comment token */
-	OPR_T,     // 13: Operator token
-	ID_T,      // 14: Identifier token
-	FLT_T,      // 15: Floating-point literal token
-	SEP_T       // 16: Separator token (comma ,, semicolon ;, parentheses ( ))
+	ERR_T, MNID_T, INL_T, STR_T, LPR_T, RPR_T, LBR_T, RBR_T,
+	KW_T, EOS_T, RTE_T, SEOF_T, CMT_T, OPR_T, ID_T, FLT_T, SEP_T,
+	VAR_T, DOT_T // Add these if required
 };
 
-/* TO_DO: Define the list of keywords */
-static de_strg tokenStrTable[NUM_TOKENS] = {
-	"ERR_T",
-	"MNID_T",
-	"INL_T",
-	"STR_T",
-	"LPR_T",
-	"RPR_T",
-	"LBR_T",
-	"RBR_T",
-	"KW_T",
-	"EOS_T",
-	"RTE_T",
-	"SEOF_T",
-	"CMT_T",
-	"OPR_T", 
-	"ID_T", 
-	"FLT_T"
+static const char* tokenStrTable[NUM_TOKENS] = {
+
+	"ERR_T", "MNID_T", "INL_T", "STR_T", "LPR_T", "RPR_T", "LBR_T", "RBR_T",
+	"KW_T", "EOS_T", "RTE_T", "SEOF_T", "CMT_T", "OPR_T", "ID_T", "FLT_T", "SEP_T"
 };
+
 
 /* TO_DO: Operators token attributes */
 typedef enum ArithmeticOperators { OP_ADD, OP_SUB, OP_MUL, OP_DIV, OP_MOD, OP_INC, OP_DEC } AriOperator; //Arithmetic operators: +, -, *, /,%,++,--
@@ -148,10 +123,15 @@ typedef struct idAttibutes {
 } IdAttibutes;
 
 /* Token declaration */
+//typedef struct Token {
+//	de_int code;				/* token code */
+//	TokenAttribute attribute;	/* token attribute */
+//	IdAttibutes   idAttribute;	/* not used in this scanner implementation - for further use */
+//} Token;
+
 typedef struct Token {
-	de_int code;				/* token code */
-	TokenAttribute attribute;	/* token attribute */
-	IdAttibutes   idAttribute;	/* not used in this scanner implementation - for further use */
+	int code;
+	TokenAttribute attribute; // union with idLexeme, intValue, floatValue, etc.
 } Token;
 
 /* Scanner */
@@ -230,7 +210,7 @@ typedef struct ScannerData {
 #define ESUNRECOG    16  // Unrecognized token
 
  /* TO_DO: State transition table definition */
-#define NUM_STATES 12
+#define NUM_STATES 13  
 #define CHAR_CLASSES 12
 
 // Transition table: rows = states, columns = char classes
@@ -240,25 +220,22 @@ typedef struct ScannerData {
 /* Character Classes:
    L(0), D(1), U(2), AMP(3), Q(4), SEOF(5), HASH(6), OP(7), SEP(8), WS(9), DOT(10), OTHER(11)
 */
-/* Character Classes:
-   L(0), D(1), U(2), AMP(3), Q(4), SEOF(5), HASH(6), OP(7), SEP(8), WS(9), DOT(10), OTHER(11)
-*/
 
 static de_int transitionTable[NUM_STATES][CHAR_CLASSES] = {
 	/*     L   D   U  AMP   Q  SEOF HASH  OP  SEP  WS  DOT  OTHER */
-	/* S0 */{  1,  2,  1,    3,  4, ESWR,   6,  7,   8,   0, 10, ESNR },
-	/* S1 */{  1,  1,  1,  ESWR, ESWR, ESWR, ESWR, ESWR, ESWR, ESWR, ESWR, ESWR }, // ID_T or KW_T
-	/* S2 */{ ESWR, 2, ESWR, ESWR, ESWR, ESWR, ESWR, ESWR, ESWR, ESWR, 10, ESWR }, // INL_T or FLT_T
-	/* S3 */{  1,  1,  1,  ESWR, ESWR, ESWR, ESWR, ESWR, ESWR, ESWR, ESWR, ESWR }, // MNID_T
-	/* S4 */{  4,  4,  4,    4,  5, ESWR,   4,   4,   4,   4,   4,   4 }, // STR_T start
-	/* S5 */{ FS, FS, FS,   FS, FS, FS,   FS,  FS,  FS,  FS,  FS,  FS }, // STR_T accept
-	/* S6 */{  6,  6,  6,    6,  6, ESWR,  7,   6,   6,   6,   6,   6 }, // CMT_T start
-	/* S7 */{ FS, FS, FS,   FS, FS, FS,  FS,  FS,  FS,  FS,  FS,  FS }, // CMT_T accept
-	/* S8 */{ FS, FS, FS,   FS, FS, FS,  FS,  FS,  FS,  FS,  FS,  FS }, // SEP_T accept
-	/* S9 */{ FS, FS, FS,   FS, FS, FS,  FS,  FS,  FS,  FS,  FS,  FS }, // EOS_T accept
-	/* S10*/{ 11, 11, ESWR, ESWR, ESWR, ESWR, ESWR, ESWR, ESWR, ESWR, ESWR, ESWR }, // FLT_T after DOT
-	/* S11*/{ 11, 11, ESWR, ESWR, ESWR, ESWR, ESWR, ESWR, ESWR, ESWR, ESWR, ESWR }  // FLT_T accep
-
+	/* S0 */ {  1,  2,  1,    3,  4, ESWR,   6,  7,   8,   0, 10, ESNR },
+	/* S1 */ {  1,  1,  1,   12, 12,   12,  12, 12,  12,  12, 12,  12 }, // ID_T or KW_T
+	/* S2 */ { ESWR, 2, ESWR, ESWR, ESWR, ESWR, ESWR, ESWR, ESWR, ESWR, 10, ESWR }, // INL_T or FLT_T
+	/* S3 */ {  1,  1,  1,  ESWR, ESWR, ESWR, ESWR, ESWR, ESWR, ESWR, ESWR, ESWR }, // MNID_T
+	/* S4 */ {  4,  4,  4,    4,  5, ESWR,   4,   4,   4,   4,   4,   4 }, // STR_T start
+	/* S5 */ { FS, FS, FS,   FS, FS, FS,   FS,  FS,  FS,  FS,  FS,  FS }, // STR_T accept
+	/* S6 */ {  6,  6,  6,    6,  6, ESWR,  7,   6,   6,   6,   6,   6 }, // CMT_T start
+	/* S7 */ { FS, FS, FS,   FS, FS, FS,  FS,  FS,  FS,  FS,  FS,  FS }, // CMT_T accept
+	/* S8 */ { FS, FS, FS,   FS, FS, FS,  FS,  FS,  FS,  FS,  FS,  FS }, // SEP_T accept
+	/* S9 */ { FS, FS, FS,   FS, FS, FS,  FS,  FS,  FS,  FS,  FS,  FS }, // EOS_T accept
+	/* S10*/ { 11, 11, ESWR, ESWR, ESWR, ESWR, ESWR, ESWR, ESWR, ESWR, ESWR, ESWR }, // FLT_T after DOT
+	/* S11*/ { 11, 11, ESWR, ESWR, ESWR, ESWR, ESWR, ESWR, ESWR, ESWR, ESWR, ESWR }, // FLT_T accept
+	/* S12*/ { FS, FS, FS,   FS, FS, FS,  FS,  FS,  FS,  FS,  FS,  FS }  // ID_T accept
 };
 
 /* Define accepting states types */
@@ -271,19 +248,20 @@ static de_int transitionTable[NUM_STATES][CHAR_CLASSES] = {
 
 /* TO_DO: Define list of acceptable states */
 static de_int stateType[NUM_STATES] = {
-	FSWR,  /* S1: ID_T or KW_T (retract needed) */
-	FSWR,  /* S2: INL_T (retract needed) */
-	FSWR,  /* S3: MNID_T (retract needed) */
-	NOFS,  /* S4: String literal start */
-	FSNR,  /* S5: STR_T (no retract) */
-	NOFS,  /* S6: Comment start */
-	FSNR,  /* S7: CMT_T (no retract) */
-	FSNR,  /* S8: Separator (no retract) */
-	FSNR,  /* S9: EOS_T (no retract) */
-	NOFS,  /* S10: After dot in number */
-	FSWR   /* S11: FLT_T (retract needed) */
+	NOFS,  // S0
+	NOFS,  // S1 ? not accepting
+	FSWR,  // S2
+	FSWR,  // S3
+	NOFS,  // S4
+	FSNR,  // S5
+	NOFS,  // S6
+	FSNR,  // S7
+	FSNR,  // S8
+	FSNR,  // S9
+	NOFS,  // S10
+	FSWR,  // S11
+	FSWR   // S12 ? accepting for identifiers
 };
-
 /*
 -------------------------------------------------
 TO_DO: Adjust your functions'definitions
@@ -308,15 +286,12 @@ Automata definitions
 */
 
 
-/* Accepting function pointer type */
-typedef Token(*PTR_ACCFUN)(de_strg lexeme);
-
 /* TO_DO: Pointer to function (of one char * argument) returning Token */
 typedef Token(*PTR_ACCFUN)(de_strg lexeme);
 
 /* Declare accepting states functions */
 
-Token funcSL(de_strg lexeme);
+//Token funcSL(de_strg lexeme);
 Token funcIL(de_strg lexeme);
 Token funcID(de_strg lexeme);
 Token funcCMT(de_strg lexeme);
@@ -326,6 +301,7 @@ Token funcEOS(de_strg lexeme);
 Token funcFLT(de_strg lexeme);
 Token funcMNID(de_strg lexeme);
 Token funcSEP(de_strg lexeme);
+Token funcSTR(de_strg lexeme);
 
 
 
@@ -335,21 +311,6 @@ Token funcSEP(de_strg lexeme);
  */
 
 /* TO_DO: Define final state table */
-
-//static PTR_ACCFUN finalStateTable[NUM_STATES] = {
-//	NULL,      /* S0 */
-//	funcID,    /* S1: ID_T or KW_T */
-//	funcIL,    /* S2: INL_T */
-//	funcMNID,  /* S3: MNID_T */
-//	NULL,      /* S4 */
-//	funcSL,    /* S5: STR_T */
-//	NULL,      /* S6 */
-//	funcCMT,   /* S7: CMT_T */
-//	funcSEP,   /* S8: Separator */
-//	funcEOS,   /* S9: EOS_T */
-//	NULL,      /* S10 */
-//	funcFLT    /* S11: FLT_T */
-//};
 
 /*
 -------------------------------------------------
