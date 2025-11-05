@@ -5,3 +5,8 @@
 /.vs
 /out/build/x64-debug
 *.exe
+/A1.bat
+/A2.bat
+/A3.bat
+/Big.sof
+/PROL.txt
