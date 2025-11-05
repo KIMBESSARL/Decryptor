@@ -96,7 +96,7 @@ de_int numScannerErrors = 0;
 ScannerData scData = { {0}, NULL, 0 };
 
 /* forward declarations (if needed) */
-Token(*finalStateTable[NUM_STATES])(const char*) = {
+Token(*finalStateTable[NUM_STATES])(de_strg lexeme) = {
 	NULL,     // S0
 	funcID,   // S1 ? if accepting identifiers here
 	funcIL,   // S2
@@ -369,16 +369,16 @@ void printToken(Token token) {
  */
  /* TO_DO: Adjust the function for ID */
 // --- Keyword check helper ---
-//de_int isKeyword(const char* lexeme) {
-//	static const char* keywords[] = {
-//		"if", "else", "while", "for", "int", "float", "return", "print"
-//	};
-//	size_t n = sizeof(keywords) / sizeof(keywords[0]);
-//	for (size_t i = 0; i < n; ++i)
-//		if (strcmp(lexeme, keywords[i]) == 0)
-//			return 1;
-//	return 0;
-//}
+de_int isKeyword(const char* lexeme) {
+	static const char* keywords[] = {
+		"if", "else", "while", "for", "int", "float", "return", "print"
+	};
+	size_t n = sizeof(keywords) / sizeof(keywords[0]);
+	for (size_t i = 0; i < n; ++i)
+		if (strcmp(lexeme, keywords[i]) == 0)
+			return 1;
+	return 0;
+}
 
 
 // --- ID (identifiers or keywords) ---
