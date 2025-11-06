@@ -70,6 +70,9 @@
 //#define MODE_MULTI 2
 
 
+
+
+
 #define RTE_CODE 1  /* Value for run-time error */
 
 /* TO_DO: Define the number of tokens */
@@ -99,6 +102,7 @@ typedef enum SourceEndOfFile { SEOF_0, SEOF_255 } EofOperator;  //End-of-file ma
 
 /* TO_DO: Data structures for declaring the token and its attributes */
 typedef union TokenAttribute {
+	de_int seof;
 	de_int codeType;      /* integer attributes accessor */
 	AriOperator arithmeticOperator;		/* arithmetic operator attribute code */
 	RelOperator relationalOperator;		/* relational operator attribute code */
@@ -118,21 +122,25 @@ typedef struct idAttibutes {
 	union {
 		de_int intValue;				/* Integer value */
 		de_real floatValue;			/* Float value */
-		de_strg stringContent;		/* String value */
+		
 	} values;
 } IdAttibutes;
 
 /* Token declaration */
-//typedef struct Token {
-//	de_int code;				/* token code */
-//	TokenAttribute attribute;	/* token attribute */
-//	IdAttibutes   idAttribute;	/* not used in this scanner implementation - for further use */
-//} Token;
-
 typedef struct Token {
-	int code;
-	TokenAttribute attribute; // union with idLexeme, intValue, floatValue, etc.
+	de_int code;				/* token code */
+	TokenAttribute attribute;	/* token attribute */
+	IdAttibutes   idAttribute;	/* not used in this scanner implementation - for further use */
+	de_strg stringContent;		/* String value */
+	de_char idLexeme[100];
+	de_char errLexeme[100];
+	
 } Token;
+
+//typedef struct Token {
+//	int code;
+//	TokenAttribute attribute; // union with idLexeme, intValue, floatValue, etc.
+//} Token;
 
 /* Scanner */
 typedef struct ScannerData {
@@ -146,6 +154,20 @@ typedef struct ScannerData {
 
 /* TO_DO: Define lexeme FIXED classes */
 /* EOF definitions */
+#define INITIAL_SIZE 128
+#define L     0   // Letter
+#define D     1   // Digit
+#define U     2   // Underscore
+#define AMP   3   // &
+#define Q     4   // Quote "
+#define SEOF  5   // End of source / file
+#define HASH  6   // #
+#define OP    7   // Operators
+#define SEP   8   // Separators
+#define WS    9   // Whitespace
+#define DOT   10  // Dot .
+#define OTHER 11  // Any other character
+
 #define EOS_CHR '\0'	// CH00
 #define EOF_CHR 0xFF	// CH01
 #define UND_CHR '_'		// CH02
@@ -208,6 +230,7 @@ typedef struct ScannerData {
 #define ESNUMFMT     14  // Invalid number format
 #define ESUNEXP      15  // Unexpected symbol
 #define ESUNRECOG    16  // Unrecognized token
+#define Q 4
 
  /* TO_DO: State transition table definition */
 #define NUM_STATES 13  
@@ -227,7 +250,7 @@ static de_int transitionTable[NUM_STATES][CHAR_CLASSES] = {
 	/* S1 */ {  1,  1,  1,   12, 12,   12,  12, 12,  12,  12, 12,  12 }, // ID_T or KW_T
 	/* S2 */ { ESWR, 2, ESWR, ESWR, ESWR, ESWR, ESWR, ESWR, ESWR, ESWR, 10, ESWR }, // INL_T or FLT_T
 	/* S3 */ {  1,  1,  1,  ESWR, ESWR, ESWR, ESWR, ESWR, ESWR, ESWR, ESWR, ESWR }, // MNID_T
-	/* S4 */ {  4,  4,  4,    4,  5, ESWR,   4,   4,   4,   4,   4,   4 }, // STR_T start
+	/* S4 */ {  4,  4,  4,   4,  5, ESWR,  4,  4,  4,  4,  4,  4 }, // STR_T: stay in S4 until closing quote
 	/* S5 */ { FS, FS, FS,   FS, FS, FS,   FS,  FS,  FS,  FS,  FS,  FS }, // STR_T accept
 	/* S6 */ {  6,  6,  6,    6,  6, ESWR,  7,   6,   6,   6,   6,   6 }, // CMT_T start
 	/* S7 */ { FS, FS, FS,   FS, FS, FS,  FS,  FS,  FS,  FS,  FS,  FS }, // CMT_T accept
@@ -237,6 +260,7 @@ static de_int transitionTable[NUM_STATES][CHAR_CLASSES] = {
 	/* S11*/ { 11, 11, ESWR, ESWR, ESWR, ESWR, ESWR, ESWR, ESWR, ESWR, ESWR, ESWR }, // FLT_T accept
 	/* S12*/ { FS, FS, FS,   FS, FS, FS,  FS,  FS,  FS,  FS,  FS,  FS }  // ID_T accept
 };
+
 
 /* Define accepting states types */
 #define EOS_CHR '\0'
@@ -277,6 +301,9 @@ static de_int nextClass(de_char c); /* Maps a character to its character class i
 static de_int nextState(de_int currentState, de_char c); /* Computes the next state from the current state and input character */
 de_void printScannerData(ScannerData scData);/* Prints scanner statistics (e.g., token histogram) */
 Token tokenizer(de_void); /* Main tokenizer function that returns the next token */
+de_int charClass(de_char ch);
+
+
 
 
 /*
@@ -359,6 +386,10 @@ extern de_int numScannerErrors;
 
 /* Scanner data */
 extern ScannerData scData;
+
+
+
+
 
 
 #endif

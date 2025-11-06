@@ -147,7 +147,8 @@ BufferPointer readerAddChar(BufferPointer const readerPointer, de_char ch) {
     if (readerPointer->position.wrte >= readerPointer->size) readerPointer->flags.isFull = TRUE;
 
     if (readerPointer->histogram != NULL && (unsigned char)ch < NCHAR) readerPointer->histogram[(de_int)ch]++;
-
+ 
+    //printf("[DEBUG] Added '%c' to stringLiteralTable at pos %d\n", ch, readerPointer->position.wrte - 1);
     return readerPointer;
 }
 

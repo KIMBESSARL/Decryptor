@@ -230,24 +230,23 @@ Token tokenizer(void) {
 
 	// --- Start DFA for multi-character tokens ---
 	state = 0;
+	lexLen = 0;
 
 	while (1) {
-		nextStateVal = nextState(state, c);
+		// Use charClass() instead of nextClass()
+		nextStateVal = transitionTable[state][charClass(c)];
 
 		if (stateType[nextStateVal] == NOFS) {
-			if (lexLen < MAX_LEXEME_LEN - 1) {
+			// Non-accepting state ? accumulate lexeme
+			if (lexLen < MAX_LEXEME_LEN - 1)
 				lexeme[lexLen++] = c;
-			}
-			else {
-			//	printf("[DEBUG] Lexeme length exceeded limit (%d). Truncating.\n", MAX_LEXEME_LEN - 1);
-				break;
-			}
 			state = nextStateVal;
 			c = readerGetChar(sourceBuffer);
 		}
 		else {
+			// Accepting state
 			if (stateType[nextStateVal] == FSWR)
-				readerRetract(sourceBuffer);
+				readerRetract(sourceBuffer);      // retract last char
 
 			if (stateType[nextStateVal] == FSNR && lexLen < MAX_LEXEME_LEN - 1)
 				lexeme[lexLen++] = c;
@@ -258,22 +257,20 @@ Token tokenizer(void) {
 
 	// Null-terminate lexeme safely
 	lexeme[lexLen] = '\0';
-	//printf("[DEBUG] Final state=%d, lexeme='%s'\n", nextStateVal, lexeme);
 
-	// --- Call final state function safely ---
+	// --- Call final state function ---
 	if (finalStateTable[nextStateVal] != NULL) {
 		currentToken = (*finalStateTable[nextStateVal])(lexeme);
 	}
 	else {
-		//printf("[DEBUG] No function for final state %d, lexeme='%s'\n", nextStateVal, lexeme);
 		currentToken.code = ERR_T;
 		strncpy(currentToken.attribute.errLexeme, lexeme, ERR_LEN - 1);
 		currentToken.attribute.errLexeme[ERR_LEN - 1] = '\0';
 	}
 
-	//printf("[DEBUG] Returning token: %s, lexeme='%s'\n", tokenStrTable[currentToken.code], lexeme);
 	return currentToken;
 }
+
 
 
 
@@ -459,58 +456,41 @@ Token funcEOS(de_strg lexeme) {
 
 
 
-// funcSTR: handles string literals like "Hello world"
-//Token funcSTR(de_strg lexeme) {
-//	Token t = { 0 };
-//	//printf("[DEBUG] funcSTR() called with '%s'\n", lexeme);
-//
-//	t.code = STR_T;
-//
-//	// Remove quotes if present
-//	size_t len = strlen(lexeme);
-//	if (len >= 2 && lexeme[0] == '"' && lexeme[len - 1] == '"') {
-//		// Copy content without the quotes
-//		size_t contentLen = len - 2;
-//		if (contentLen >= MAX_LEXEME_LEN - 1)
-//			contentLen = MAX_LEXEME_LEN - 1;
-//
-//		strncpy(t.attribute.idLexeme, lexeme + 1, contentLen);
-//		t.attribute.idLexeme[contentLen] = '\0';
-//	}
-//	else {
-//		// Copy entire lexeme safely if quotes missing
-//		strncpy(t.attribute.idLexeme, lexeme, VID_LEN);
-//		t.attribute.idLexeme[VID_LEN] = '\0';
-//
-//	}
-//
-//	return t;
-//}
-
-
-
 Token funcSTR(de_strg lexeme) {
 	Token t = { 0 };
 	t.code = STR_T;
 
 	size_t len = strlen(lexeme);
-	if (len >= 2 && lexeme[0] == '"' && lexeme[len - 1] == '"') {
-		// Copy content without the quotes
-		size_t contentLen = len - 2;
-		if (contentLen > VID_LEN)
-			contentLen = VID_LEN;
 
+	// Ensure string has quotes
+	if (len >= 2 && lexeme[0] == '"' && lexeme[len - 1] == '"') {
+		size_t contentLen = len - 2;  // exclude quotes
+		if (contentLen >= VID_LEN) contentLen = VID_LEN - 1;
+
+		// Store in token attribute
 		strncpy(t.attribute.idLexeme, lexeme + 1, contentLen);
 		t.attribute.idLexeme[contentLen] = '\0';
+
+		// Store in string literal table
+		for (size_t i = 1; i < len - 1; ++i) {
+			readerAddChar(stringLiteralTable, lexeme[i]);
+		}
+		// Instead of newline, add null terminator
+		readerAddChar(stringLiteralTable, '\0');// null-terminate for printing
 	}
 	else {
-		// Copy entire lexeme safely if quotes missing
-		strncpy(t.attribute.idLexeme, lexeme, VID_LEN);
-		t.attribute.idLexeme[VID_LEN] = '\0';
+		// No quotes — fallback
+		strncpy(t.attribute.idLexeme, lexeme, VID_LEN - 1);
+		t.attribute.idLexeme[VID_LEN - 1] = '\0';
+		readerAddChar(stringLiteralTable, '\0'); // empty string
 	}
 
+	//printf("[DEBUG] funcSTR() stored: '%s'\n", t.attribute.idLexeme);
 	return t;
 }
+
+
+
 
 
 /* funcCMT: comment -> store preview in small id buffer or full in strLexeme if you prefer */
@@ -587,11 +567,26 @@ de_int nextClass(de_char c) {
 	if (c == HST_CHR) return 6;             // HASH: #
 	if (strchr("+-*/=%", c)) return 7;      // OP: operators
 	if (strchr(",:", c)) return 8;          // SEP: separators
-	if (c == SPC_CHR || c == TAB_CHR) return 9; // WS: whitespace
+	if (c == SPC_CHR || c == TAB_CHR || c == '\n') return 9; // WS: whitespace
 	if (c == DOT_CHR) return 10;            // DOT: .
 	return 11;                              // OTHER
 }
 
+de_int charClass(de_char ch) {
+	if (ch >= 'a' && ch <= 'z') return L;       // letter
+	if (ch >= 'A' && ch <= 'Z') return L;       // letter
+	if (ch >= '0' && ch <= '9') return D;       // digit
+	if (ch == '_')          return U;           // underscore
+	if (ch == '&')          return AMP;         // &
+	if (ch == '"')          return Q;           // double quote
+	if (ch == '\0')         return SEOF;        // end of file
+	if (ch == '#')          return HASH;
+	if (strchr("+-*/=%", ch)) return OP;
+	if (strchr("(){};,:", ch)) return SEP;
+	if (ch == ' ' || ch == '\t' || ch == '\n') return WS;
+	if (ch == '.') return DOT;
+	return OTHER;                                // all other chars
+}
 
 /*
 ************************************************************
