@@ -68,29 +68,30 @@
 //#define KWT_SIZE 10
 #define MODE_ADDIT 0
 //#define MODE_MULTI 2
-
-
-
-
+#define MAX_LEXEME_LEN 256  // keep as 256, but guard all writes carefully
 
 #define RTE_CODE 1  /* Value for run-time error */
+enum CHAR_CLASSES {
+	CC_L, CC_D, CC_U, CC_AMP, CC_Q, CC_SEOF, CC_HASH,
+	CC_OP, CC_SEP, CC_WS, CC_DOT, CC_OTHER,
+	CC_COLONDASH, CC_COMMENT, CC_VAR, CC_SQUOTE
+};
 
-/* TO_DO: Define the number of tokens */
-#define NUM_TOKENS 17
-
-/* TO_DO: Define Token codes - Create your token classes */
-
-
+#define CHAR_CLASSES 15
 enum TOKENS {
 	ERR_T, MNID_T, INL_T, STR_T, LPR_T, RPR_T, LBR_T, RBR_T,
 	KW_T, EOS_T, RTE_T, SEOF_T, CMT_T, OPR_T, ID_T, FLT_T, SEP_T,
-	VAR_T, DOT_T // Add these if required
+	VAR_T, DOT_T, COLON_DASH_T
 };
 
-static const char* tokenStrTable[NUM_TOKENS] = {
 
+
+#define NUM_TOKENS 21
+
+static const char* tokenStrTable[NUM_TOKENS] = {
 	"ERR_T", "MNID_T", "INL_T", "STR_T", "LPR_T", "RPR_T", "LBR_T", "RBR_T",
-	"KW_T", "EOS_T", "RTE_T", "SEOF_T", "CMT_T", "OPR_T", "ID_T", "FLT_T", "SEP_T"
+	"KW_T", "EOS_T", "RTE_T", "SEOF_T", "CMT_T", "OPR_T", "ID_T", "FLT_T", "SEP_T",
+	"VAR_T", "DOT_T", "COLON_DASH_T", "SQUOTE_T"
 };
 
 
@@ -137,10 +138,7 @@ typedef struct Token {
 	
 } Token;
 
-//typedef struct Token {
-//	int code;
-//	TokenAttribute attribute; // union with idLexeme, intValue, floatValue, etc.
-//} Token;
+
 
 /* Scanner */
 typedef struct ScannerData {
@@ -167,6 +165,7 @@ typedef struct ScannerData {
 #define WS    9   // Whitespace
 #define DOT   10  // Dot .
 #define OTHER 11  // Any other character
+#define PERC  12   // % Comment
 
 #define EOS_CHR '\0'	// CH00
 #define EOF_CHR 0xFF	// CH01
@@ -233,33 +232,34 @@ typedef struct ScannerData {
 #define Q 4
 
  /* TO_DO: State transition table definition */
-#define NUM_STATES 13  
-#define CHAR_CLASSES 12
-
-// Transition table: rows = states, columns = char classes
+#define NUM_STATES 19
+#define CHAR_CLASSES 15
 
 /* TO_DO: Transition table - type of states defined in separate table */
 
 /* Character Classes:
    L(0), D(1), U(2), AMP(3), Q(4), SEOF(5), HASH(6), OP(7), SEP(8), WS(9), DOT(10), OTHER(11)
 */
-
 static de_int transitionTable[NUM_STATES][CHAR_CLASSES] = {
-	/*     L   D   U  AMP   Q  SEOF HASH  OP  SEP  WS  DOT  OTHER */
-	/* S0 */ {  1,  2,  1,    3,  4, ESWR,   6,  7,   8,   0, 10, ESNR },
-	/* S1 */ {  1,  1,  1,   12, 12,   12,  12, 12,  12,  12, 12,  12 }, // ID_T or KW_T
-	/* S2 */ { ESWR, 2, ESWR, ESWR, ESWR, ESWR, ESWR, ESWR, ESWR, ESWR, 10, ESWR }, // INL_T or FLT_T
-	/* S3 */ {  1,  1,  1,  ESWR, ESWR, ESWR, ESWR, ESWR, ESWR, ESWR, ESWR, ESWR }, // MNID_T
-	/* S4 */ {  4,  4,  4,   4,  5, ESWR,  4,  4,  4,  4,  4,  4 }, // STR_T: stay in S4 until closing quote
-	/* S5 */ { FS, FS, FS,   FS, FS, FS,   FS,  FS,  FS,  FS,  FS,  FS }, // STR_T accept
-	/* S6 */ {  6,  6,  6,    6,  6, ESWR,  7,   6,   6,   6,   6,   6 }, // CMT_T start
-	/* S7 */ { FS, FS, FS,   FS, FS, FS,  FS,  FS,  FS,  FS,  FS,  FS }, // CMT_T accept
-	/* S8 */ { FS, FS, FS,   FS, FS, FS,  FS,  FS,  FS,  FS,  FS,  FS }, // SEP_T accept
-	/* S9 */ { FS, FS, FS,   FS, FS, FS,  FS,  FS,  FS,  FS,  FS,  FS }, // EOS_T accept
-	/* S10*/ { 11, 11, ESWR, ESWR, ESWR, ESWR, ESWR, ESWR, ESWR, ESWR, ESWR, ESWR }, // FLT_T after DOT
-	/* S11*/ { 11, 11, ESWR, ESWR, ESWR, ESWR, ESWR, ESWR, ESWR, ESWR, ESWR, ESWR }, // FLT_T accept
-	/* S12*/ { FS, FS, FS,   FS, FS, FS,  FS,  FS,  FS,  FS,  FS,  FS }  // ID_T accept
+	/*		    L  D  U  AMP Q  SEOF HASH  OP  SEP  WS  DOT  OTHER COLONDASH COMMENT */
+	/* S0  */ { 1, 2, 1, 3, 4, ESWR, 6, 7, 8, 0, 10, ESNR, 13, 14, 1 },
+	/* S1  */ {  1,  1,  1,   12, 12,   12,  12, 12,  12,  12, 12,  12,     12,     12 },
+	/* S2  */ { ESWR, 2, ESWR, ESWR, ESWR, ESWR, ESWR, ESWR, ESWR, ESWR, 10, ESWR, ESWR, ESWR },
+	/* S3  */ {  1,  1,  1,  ESWR, ESWR, ESWR, ESWR, ESWR, ESWR, ESWR, ESWR, ESWR, ESWR, ESWR },
+	/* S4  */ {  4,  4,  4,   4,  5, ESWR,  4,  4,  4,  4,  4,  4,    4,     4 },
+	/* S5  */ { FS, FS, FS,   FS, FS, FS,   FS,  FS,  FS,  FS,  FS,  FS,   FS,    FS },
+	/* S6  */ {  6,  6,  6,    6,  6, ESWR,  7,   6,   6,   6,   6,   6,    6,     6 },
+	/* S7  */ { FS, FS, FS,   FS, FS, FS,  FS,  FS,  FS,  FS,  FS,  FS,   FS,    FS },
+	/* S8  */ { FS, FS, FS,   FS, FS, FS,  FS,  FS,  FS,  FS,  FS,  FS,   FS,    FS },
+	/* S9  */ { FS, FS, FS,   FS, FS, FS,  FS,  FS,  FS,  FS,  FS,  FS,   FS,    FS },
+	/* S10 */ { 11, 11, ESWR, ESWR, ESWR, ESWR, ESWR, ESWR, ESWR, ESWR, ESWR, ESWR, ESWR, ESWR },
+	/* S11 */ { 11, 11, ESWR, ESWR, ESWR, ESWR, ESWR, ESWR, ESWR, ESWR, ESWR, ESWR, ESWR, ESWR },
+	/* S12 */ { FS, FS, FS,   FS, FS, FS,  FS,  FS,  FS,  FS,  FS,  FS,   FS,    FS },
+	/* S13 */ { ESWR, ESWR, ESWR, ESWR, ESWR, ESWR, ESWR, ESWR, ESWR, ESWR, ESWR, ESWR, 15, ESWR, ESWR },
+	/* S14 */ { 14, 14, 14, 14, 14, FS, 14, 14, 14, 14, 14, 14, 14, 14, 14 },
+	/* S15 */ { FS, FS, FS, FS, FS, FS, FS, FS, FS, FS, FS, FS, FS, FS, FS }
 };
+
 
 
 /* Define accepting states types */
@@ -293,13 +293,19 @@ TO_DO: Adjust your functions'definitions
 */
 
 /* Static (local) function  prototypes */
+int isOperator(char c);
+int isSeparator(char c);
+de_void printScannerData(de_void);
+Token funcDot(de_strg lexeme);
+Token funcColonDash(de_strg lexeme);
+Token funcVar(de_strg lexeme);
 void printToken(Token t);
 de_real parseFloatAttribute(de_strg lexeme);
 de_int getSeparatorAttribute(de_strg lexeme);
 de_int startScanner(BufferPointer psc_buf); /* Starts the scanner and returns a status code or result */
 static de_int nextClass(de_char c); /* Maps a character to its character class index */
 static de_int nextState(de_int currentState, de_char c); /* Computes the next state from the current state and input character */
-de_void printScannerData(ScannerData scData);/* Prints scanner statistics (e.g., token histogram) */
+//de_void printScannerData(ScannerData scData);/* Prints scanner statistics (e.g., token histogram) */
 Token tokenizer(de_void); /* Main tokenizer function that returns the next token */
 de_int charClass(de_char ch);
 
@@ -346,22 +352,13 @@ Language keywords
 */
 
 /* TO_DO: Define the number of Keywords from the language */
-#define KWT_SIZE 11
+#define KWT_SIZE 13
 
-/* TO_DO: Define the list of keywords */
 static de_strg keywordTable[KWT_SIZE] = {
-	"data",		/* KW00 */
-	"code",		/* KW01 */
-	"int",		/* KW02 */
-	"real",		/* KW03 */
-	"string",	/* KW04 */
-	"if",		/* KW05 */
-	"then",		/* KW06 */
-	"else",		/* KW07 */
-	"while",	/* KW08 */
-	"do",		/* KW09 */
-	"return"	/* KW10 */
-};
+	"data", "code", "int", "real", "string",
+	"if", "then", "else", "while", "do", "return",
+	"mortal", "man"
+};;
 
 /* NEW SECTION: About indentation */
 

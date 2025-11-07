@@ -76,8 +76,6 @@
 #endif
 
 
-#define MAX_LEXEME_LEN 256
-
 /*
 ----------------------------------------------------------------
 TO_DO: Global vars definitions
@@ -95,10 +93,10 @@ static const char* tokenStr(de_int code);
 de_int numScannerErrors = 0;
 ScannerData scData = { {0}, NULL, 0 };
 
-/* forward declarations (if needed) */
+
 Token(*finalStateTable[NUM_STATES])(de_strg lexeme) = {
 	NULL,     // S0
-	funcID,   // S1 ? if accepting identifiers here
+	funcID,   // S1
 	funcIL,   // S2
 	funcMNID, // S3
 	NULL,     // S4
@@ -108,8 +106,12 @@ Token(*finalStateTable[NUM_STATES])(de_strg lexeme) = {
 	funcSEP,  // S8
 	funcEOS,  // S9
 	NULL,     // S10
-	funcFLT,  // S11
-	funcID    // S12 ? if accepting identifiers here
+	funcColonDash, // S11
+	//funcFLT,  // S11
+	funcID,   // S12
+	funcColonDash, // S13
+	funcCMT,       // S14
+	funcColonDash  // S15
 };
 
 
@@ -131,26 +133,13 @@ static BufferPointer sourceBuffer;			/* Pointer to input source buffer */
  */
  /* TO_DO: Follow the standard and adjust datatypes */
 
-//de_int startScanner(BufferPointer psc_buf) {
-//	/* TO_DO: Start histogram */
-//	for (de_int i=0; i<NUM_TOKENS;i++)
-//		scData.scanHistogram[i] = 0;
-//	/* Basic scanner initialization */
-//	/* in case the buffer has been read previously  */
-//	readerRecover(psc_buf);
-//	readerClear(stringLiteralTable);
-//	line = 1;
-//	sourceBuffer = psc_buf;
-//	return EXIT_SUCCESS; /*0*/
-//}
 
-static const char* tokenStr(de_int code) {
-	static const char* tokenNames[] = {
-		"ERR_T", "SEOF_T", "MNID_T", "KW_T", "CMT_T", "LPR_T",
-		"RPR_T", "LBR_T", "RBR_T", "EOS_T", "NUM_T", "STR_T"
-	};
+
+
+
+const char* tokenStr(de_int code) {
 	if (code < 0 || code >= NUM_TOKENS) return "UNKNOWN_T";
-	return tokenNames[code];
+	return tokenStrTable[code];
 }
 
 
@@ -176,12 +165,6 @@ de_int startScanner(BufferPointer psc_buf) {
 
 /* Converts token code to readable string for printing statistics */
  
-	
-
-
-
-
-
 
 /*
  ************************************************************
@@ -193,9 +176,6 @@ de_int startScanner(BufferPointer psc_buf) {
  *		in the Transition Diagram).
  ***********************************************************
  */
-
-
-#define MAX_LEXEME_LEN 256  // keep as 256, but guard all writes carefully
 
 Token tokenizer(void) {
 	Token currentToken = { 0 };
@@ -219,46 +199,65 @@ Token tokenizer(void) {
 		return currentToken;
 	}
 
+	// --- Handle comments starting with % ---
+	if (c == '%') {
+		lexLen = 0;
+		lexeme[lexLen++] = c;
+		while (1) {
+			c = readerGetChar(sourceBuffer);
+			if (c == NWL_CHR || c == EOS_CHR || c == EOF_CHR) break;
+			if (lexLen < MAX_LEXEME_LEN - 1) lexeme[lexLen++] = c;
+		}
+		lexeme[lexLen] = '\0';
+		currentToken.code = CMT_T;
+		strncpy(currentToken.attribute.idLexeme, lexeme, VID_LEN);
+		currentToken.attribute.idLexeme[VID_LEN] = '\0';
+		return currentToken;
+	}
+
 	// --- Handle single-character symbols ---
 	switch (c) {
 	case LPR_CHR: currentToken.code = LPR_T; return currentToken;
 	case RPR_CHR: currentToken.code = RPR_T; return currentToken;
 	case LBR_CHR: currentToken.code = LBR_T; return currentToken;
 	case RBR_CHR: currentToken.code = RBR_T; return currentToken;
-	case SCL_CHR: currentToken.code = EOS_T; return currentToken;
+	case DOT_CHR: currentToken.code = DOT_T; return currentToken;
 	}
 
-	// --- Start DFA for multi-character tokens ---
+	// --- Handle multi-character tokens ---
 	state = 0;
 	lexLen = 0;
 
 	while (1) {
-		// Use charClass() instead of nextClass()
-		nextStateVal = transitionTable[state][charClass(c)];
+		de_int charClassCode = charClass(c);
+		nextStateVal = transitionTable[state][charClassCode];
 
+		// Accumulate lexeme for non-accepting states
 		if (stateType[nextStateVal] == NOFS) {
-			// Non-accepting state ? accumulate lexeme
-			if (lexLen < MAX_LEXEME_LEN - 1)
-				lexeme[lexLen++] = c;
+			if (lexLen < MAX_LEXEME_LEN - 1) lexeme[lexLen++] = c;
 			state = nextStateVal;
 			c = readerGetChar(sourceBuffer);
 		}
 		else {
-			// Accepting state
 			if (stateType[nextStateVal] == FSWR)
-				readerRetract(sourceBuffer);      // retract last char
-
+				readerRetract(sourceBuffer);
 			if (stateType[nextStateVal] == FSNR && lexLen < MAX_LEXEME_LEN - 1)
 				lexeme[lexLen++] = c;
-
 			break;
 		}
 	}
 
-	// Null-terminate lexeme safely
+	// Null-terminate lexeme
 	lexeme[lexLen] = '\0';
 
-	// --- Call final state function ---
+	// --- Handle special tokens ---
+	if (strcmp(lexeme, ":-") == 0) {
+		currentToken.code = COLON_DASH_T;
+		strcpy(currentToken.attribute.idLexeme, ":-");
+		return currentToken;
+	}
+
+	// --- Call final state function if defined ---
 	if (finalStateTable[nextStateVal] != NULL) {
 		currentToken = (*finalStateTable[nextStateVal])(lexeme);
 	}
@@ -326,30 +325,83 @@ de_int nextState(de_int state, de_char c) {
  */
 
 void printToken(Token token) {
-	printf("%-10s", tokenStrTable[token.code]);
+	// Print token name first
+	printf("%-15s", tokenStrTable[token.code]);  // Adjust width if needed
+
 	switch (token.code) {
+		// Keywords, identifiers, variables, operators, colon-dash, comments
 	case KW_T:
-	case MNID_T:
 	case ID_T:
-		printf("\t\t%s\n", token.attribute.idLexeme);
+	case VAR_T:
+	case OPR_T:
+	case CMT_T:
+		printf("\t%s\n", token.attribute.idLexeme);
 		break;
+
+		// Integer literals
 	case INL_T:
-		printf("\t\t%d\n", (int)token.attribute.intValue);
+		printf("\t%d\n", (int)token.attribute.intValue);
 		break;
+
+		// Float literals
 	case FLT_T:
-		printf("\t\t%.2f\n", token.attribute.floatValue);
+		printf("\t%.2f\n", token.attribute.floatValue);
 		break;
+
+		// String literals
 	case STR_T:
-		printf("\t\t%s\n", token.attribute.idLexeme);
+		printf("\t%s\n", token.attribute.idLexeme);
 		break;
+
+		// Single-character symbols
+	case LPR_T:
+		printf("\t(\n");
+		break;
+	case RPR_T:
+		printf("\t)\n");
+		break;
+	case LBR_T:
+		printf("\t{\n");
+		break;
+	case RBR_T:
+		printf("\t}\n");
+		break;
+	case DOT_T:
+		printf("\t.\n");
+		break;
+	case COLON_DASH_T:
+		printf("\t:-\n");
+		break;
+
+		// End of file
 	case SEOF_T:
-		printf("\t0\n");
+		printf("\t<EOF>\n");
 		break;
+
+		// Error tokens
+	case ERR_T:
+		printf("\t%s\n", token.attribute.errLexeme);
+		break;
+
 	default:
-		printf("\n");
+		printf("\n"); // unknown token
+		break;
 	}
 }
 
+
+ /* TO_DO: Adjust the function for ID */
+// --- Keyword check helper ---
+de_int isKeyword(const char* lexeme) {
+	static const char* keywords[] = {
+		"data", "code", "int", "real", "string", "if", "then", "else", "while", "do", "return", "mortal", "man"
+	};
+	size_t n = sizeof(keywords) / sizeof(keywords[0]);
+	for (size_t i = 0; i < n; ++i)
+		if (strcmp(lexeme, keywords[i]) == 0)
+			return 1;
+	return 0;
+}
 
 
 /*
@@ -364,49 +416,20 @@ void printToken(Token token) {
  *  - Suggestion: Use "strncpy" function.
  ***********************************************************
  */
- /* TO_DO: Adjust the function for ID */
-// --- Keyword check helper ---
-de_int isKeyword(const char* lexeme) {
-	static const char* keywords[] = {
-		"if", "else", "while", "for", "int", "float", "return", "print"
-	};
-	size_t n = sizeof(keywords) / sizeof(keywords[0]);
-	for (size_t i = 0; i < n; ++i)
-		if (strcmp(lexeme, keywords[i]) == 0)
-			return 1;
-	return 0;
-}
 
-
-// --- ID (identifiers or keywords) ---
+/* Handles identifiers, keywords, and variables */
 Token funcID(de_strg lexeme) {
 	Token t = { 0 };
-	//printf("[DEBUG] funcID() called with '%s'\n", lexeme);
 
-	if (strcmp(lexeme, "main") == 0) {
-		t.code = MNID_T;
-	}
-	else if (isKeyword(lexeme)) {
-		t.code = KW_T;
+	if (isupper((unsigned char)lexeme[0])) {
+		t.code = VAR_T;    // Variable (starts with uppercase)
 	}
 	else {
-		t.code = ID_T;
+		t.code = KW_T;     // Keyword/atom (starts with lowercase)
 	}
 
-	// Copy safely into the attribute
 	strncpy(t.attribute.idLexeme, lexeme, VID_LEN);
 	t.attribute.idLexeme[VID_LEN] = '\0';
-
-	return t;
-}
-
-// --- Integer literal ---
-Token funcIL(de_strg lexeme) {
-	Token t = { 0 };
-	//printf("[DEBUG] funcIL() called with '%s'\n", lexeme);
-
-	t.code = INL_T;
-	t.attribute.intValue = atoi(lexeme);
 	return t;
 }
 
@@ -462,8 +485,8 @@ Token funcSTR(de_strg lexeme) {
 
 	size_t len = strlen(lexeme);
 
-	// Ensure string has quotes
-	if (len >= 2 && lexeme[0] == '"' && lexeme[len - 1] == '"') {
+	// Check for both single and double quotes
+	if (len >= 2 && ((lexeme[0] == '"' && lexeme[len - 1] == '"') || (lexeme[0] == '\'' && lexeme[len - 1] == '\''))) {
 		size_t contentLen = len - 2;  // exclude quotes
 		if (contentLen >= VID_LEN) contentLen = VID_LEN - 1;
 
@@ -475,8 +498,7 @@ Token funcSTR(de_strg lexeme) {
 		for (size_t i = 1; i < len - 1; ++i) {
 			readerAddChar(stringLiteralTable, lexeme[i]);
 		}
-		// Instead of newline, add null terminator
-		readerAddChar(stringLiteralTable, '\0');// null-terminate for printing
+		readerAddChar(stringLiteralTable, '\0'); // null-terminate
 	}
 	else {
 		// No quotes — fallback
@@ -485,23 +507,17 @@ Token funcSTR(de_strg lexeme) {
 		readerAddChar(stringLiteralTable, '\0'); // empty string
 	}
 
-	//printf("[DEBUG] funcSTR() stored: '%s'\n", t.attribute.idLexeme);
 	return t;
 }
 
 
 
-
-
-/* funcCMT: comment -> store preview in small id buffer or full in strLexeme if you prefer */
+/* Handles comments starting with '%' until end of line */
 Token funcCMT(de_strg lexeme) {
 	Token t = { 0 };
 	t.code = CMT_T;
-	/* store a preview in idLexeme (VID_LEN); if you want full comment, use strLexeme */
-	size_t copyLen = strlen(lexeme);
-	if (copyLen > VID_LEN) copyLen = VID_LEN;
-	memcpy(t.attribute.idLexeme, lexeme, copyLen);
-	t.attribute.idLexeme[copyLen] = '\0';
+	strncpy(t.attribute.idLexeme, lexeme, VID_LEN);
+	t.attribute.idLexeme[VID_LEN] = '\0';
 	return t;
 }
 
@@ -572,20 +588,26 @@ de_int nextClass(de_char c) {
 	return 11;                              // OTHER
 }
 
-de_int charClass(de_char ch) {
-	if (ch >= 'a' && ch <= 'z') return L;       // letter
-	if (ch >= 'A' && ch <= 'Z') return L;       // letter
-	if (ch >= '0' && ch <= '9') return D;       // digit
-	if (ch == '_')          return U;           // underscore
-	if (ch == '&')          return AMP;         // &
-	if (ch == '"')          return Q;           // double quote
-	if (ch == '\0')         return SEOF;        // end of file
-	if (ch == '#')          return HASH;
-	if (strchr("+-*/=%", ch)) return OP;
-	if (strchr("(){};,:", ch)) return SEP;
-	if (ch == ' ' || ch == '\t' || ch == '\n') return WS;
-	if (ch == '.') return DOT;
-	return OTHER;                                // all other chars
+
+de_int charClass(de_char c) {
+	if (isalpha(c)) {
+		if (isupper(c)) return CC_VAR; // Variables start with uppercase
+		return CC_L; // Lowercase letters
+	}
+	if (isdigit(c)) return CC_D;
+	if (c == '_') return CC_U;
+	if (c == '&') return CC_AMP; // Use actual ampersand character
+	if (c == '"') return CC_Q;
+	if (c == EOF_CHR || c == EOS_CHR) return CC_SEOF;
+	if (c == '#') return CC_HASH;
+	if (c == ':' || c == '-') return CC_COLONDASH; // For :- operator
+	if (c == '%') return CC_COMMENT; // Prolog-style comment
+	if (isOperator(c)) return CC_OP;
+	if (isSeparator(c)) return CC_SEP;
+	if (isspace(c)) return CC_WS;
+	if (c == '.') return CC_DOT;
+	if (c == '\'') return CC_SQUOTE;
+	return CC_OTHER;
 }
 
 /*
@@ -663,27 +685,10 @@ Token funcErr(de_strg lexeme) {
  ***********************************************************
  */
 
- /* printScannerData: prints histogram */
-void printScannerData(ScannerData scDataLocal) {
-	printf("Statistics:\n");
-	printf("----------------------------------\n");
-	for (int cont = 0; cont < NUM_TOKENS; cont++) {
-		if (scDataLocal.scanHistogram[cont] > 0) {
-			printf("Token[%s]=%d\n", tokenStrTable[cont], scDataLocal.scanHistogram[cont]);
-		}
-	}
-	printf("----------------------------------\n");
-}
-
-
-
 
 /*
 TO_DO: (If necessary): HERE YOU WRITE YOUR ADDITIONAL FUNCTIONS (IF ANY).
 */
-
-
-
 
 // Example definition for parseFloatAttribute
 de_real parseFloatAttribute(de_strg lexeme) {
@@ -696,4 +701,61 @@ de_int getSeparatorAttribute(de_strg lexeme) {
 	if (strcmp(lexeme, ",") == 0) return COMMA_CHR;
 	// Add more cases as needed
 	return -1; // Unknown separator
+}
+
+
+Token funcDot(de_strg lexeme) {
+	Token t = { 0 };
+	t.code = DOT_T;
+	return t;
+}
+
+Token funcColonDash(char* lexeme) {
+	Token t = { 0 };
+	t.code = COLON_DASH_T;
+	strcpy(t.attribute.idLexeme, ":-");
+	return t;
+}
+
+
+Token funcVar(de_strg lexeme) {
+	Token t = { 0 };
+	t.code = VAR_T;
+	strncpy(t.attribute.idLexeme, lexeme, VID_LEN);
+	t.attribute.idLexeme[VID_LEN] = '\0';
+	return t;
+}
+
+
+de_void printScannerData(de_void) {
+	printf("Scanner configuration:\n");
+	printf("States: %d\n", NUM_STATES);
+	printf("Character Classes: %d\n", CHAR_CLASSES);
+}
+int isOperator(char c) {
+	// Define what characters are considered operators
+	return (c == '+' || c == '-' || c == '*' || c == '/' || c == '=' || c == ':' || c == '<' || c == '>');
+}
+
+int isSeparator(char c) {
+	// Define what characters are considered separators
+	return (c == ',' || c == ';' || c == '(' || c == ')' || c == '[' || c == ']');
+}
+
+
+/* Handles '.' */
+Token funcDOT(de_strg lexeme) {
+	Token t = { 0 };
+	t.code = DOT_T;
+	strncpy(t.attribute.idLexeme, ".", VID_LEN);
+	t.attribute.idLexeme[VID_LEN] = '\0';
+	return t;
+}
+
+/* Stub for integer literals if referenced */
+Token funcIL(de_strg lexeme) {
+	Token t = { 0 };
+	t.code = INL_T;
+	t.attribute.intValue = atoi(lexeme);
+	return t;
 }

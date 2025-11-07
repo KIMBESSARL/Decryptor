@@ -98,7 +98,8 @@ extern Token tokenizer(de_void);
 /* External scanner functions and data */
 extern de_int startScanner(BufferPointer pBuffer);
 extern ScannerData scData;          /* Struct or global scanner data (defined in scanner.c) */
-extern de_void printScannerData(ScannerData scData);
+de_int tokenCounts[NUM_TOKENS] = { 0 };
+
 
 
 
@@ -161,152 +162,100 @@ de_int main3Scanner(de_int argc, de_strg* argv) {
 	}
 
 
+	/* Ensure proper arguments */
+	if (argc < 3) {
+		fprintf(stderr, "Usage: %s <source file>\n", argv[0]);
+		return EXIT_FAILURE;
+	}
 
 	/* Get filename */
 	filename = argv[2];
 
-	/* Open file */
-	fileHandler = fopen(filename, "r");
-	if (fileHandler == NULL) {
-		printScannerError("%s%s%s", argv[0], ": Cannot open file: ", filename);
-		exit(EXIT_FAILURE);
-	}
-
-	/* Load file contents into buffer */
-	loadSize = readerLoad(sourceBuffer, filename);
-	if (loadSize == READER_ERROR) {
-		printScannerError("%s%s", argv[0], ": Error loading file");
-		exit(EXIT_FAILURE);
-	}
-	/* Close file */
-	fclose(fileHandler);
-
-
-	/* Find the size of the file */
-	if (loadSize == READER_ERROR) {
-		printf("The input file %s %s\n", argv[2], "is not completely loaded.");
-		printf("Input file size: %ld\n", getScannerFilesize(argv[2]));
-	}
-
-	/* Compact and display the source buffer and add SEOF to input program buffer */
-	if ((loadSize != READER_ERROR) && (loadSize != 0)) {
-		if (readerAddChar(sourceBuffer, READER_TERMINATOR)) {
-			displayScanner(sourceBuffer);
-		}
-	}
-
-
-	if (argc < 2) {
-		fprintf(stderr, "Usage: %s <source file>\n", argv[0]);
-		return EXIT_FAILURE;
-	}
-	printf("\n");
-	printf("\nScanning source file...\n");
-	printf("Token\t\tAttribute\n");
-	printf("----------------------------------\n");
-
-	/* 1?? Create source buffer */
+	/* Create source buffer */
 	sourceBuffer = readerCreate(READER_DEFAULT_SIZE, READER_DEFAULT_INCREMENT, MODE_MULTI);
 	if (!sourceBuffer) {
 		fprintf(stderr, "Could not create source buffer\n");
 		exit(EXIT_FAILURE);
 	}
-	/* 2?? Load source file */
-	if (!readerLoad(sourceBuffer, argv[2])) {
-		fprintf(stderr, "Could not load source file\n");
+
+	/* Load file into buffer */
+	loadSize = readerLoad(sourceBuffer, filename);
+	if (loadSize == READER_ERROR) {
+		fprintf(stderr, "%s: Error loading file %s\n", argv[0], filename);
 		exit(EXIT_FAILURE);
 	}
 
-	/* 3?? Add SEOF marker and reset reader */
-	readerAddChar(sourceBuffer, '\0');
-	//readerRecover(sourceBuffer);
+	/* Add SEOF marker */
+	readerAddChar(sourceBuffer, READER_TERMINATOR);
 
+	/* Display source buffer */
+	if (loadSize > 0) {
+		displayScanner(sourceBuffer);
+	}
+
+	/* Initialize scanner */
 	if (startScanner(sourceBuffer) != EXIT_SUCCESS) {
 		printf("Scanner initialization failed.\n");
 		exit(EXIT_FAILURE);
 	}
 
+	/* Print header */
+	printf("\nScanning source file...\n");
+	printf("Token\t\tAttribute\n");
+	printf("----------------------------------\n");
 
-/* Loop to print the Statistic*/
-/* Load your source file once */
-readerLoad(sourceBuffer, filename);
-/* Start scanning */
-while (1) {
-	Token t = tokenizer();
+	/* Token statistics array */
+	int errorCount = 0;
+	Token t;
 
-	/* --- print token info safely --- */
-	switch (t.code) {
-	case KW_T:
-	case MNID_T:
-	case ID_T:
-	case STR_T:
-		/* only print lexeme if the field exists */
-		printf("%-20s %s\n", tokenStrTable[t.code], t.attribute.idLexeme);
-		break;
+	/* Main tokenization loop */
+	while (1) {
+		t = tokenizer();
+		if (t.code == SEOF_T) break;   // stop at end of file
 
-	case ERR_T:
-		printf("%-20s %s\n", tokenStrTable[t.code], t.attribute.errLexeme);
-		break;
+		printToken(t);                 // print the token
 
-	case SEOF_T:
-		/* some compilers complain if seofType doesn’t exist — you can remove it if needed */
-		printf("%-20s\n", tokenStrTable[t.code]);
-		break;
+		// Count the token occurrence
+		if (t.code >= 0 && t.code < NUM_TOKENS)
+			tokenCounts[t.code]++;
 
-	default:
-		printf("%-20s\n", tokenStrTable[t.code]);
-		break;
+		// Count errors specifically
+		if (t.code == ERR_T)
+			errorCount++;
 	}
 
-	/* --- count tokens --- */
-	if (t.code >= 0 && t.code < NUM_TOKENS)
-		tokenCounts[t.code]++;
+	/* Print string literal table */
+	printf("\nPrinting string table...\n");
+	printf("----------------------------------\n");
+	if (stringLiteralTable && stringLiteralTable->position.wrte > 0) {
+		de_int i = 0;
+		while (i < stringLiteralTable->position.wrte) {
+			if (stringLiteralTable->content[i] != '\0')
+				printf("%s\n", &stringLiteralTable->content[i]);
 
-	/* --- stop at end-of-file --- */
-	if (t.code == SEOF_T)
-		break;
-}
-
-/* After scanning is complete */
-printf("\nPrinting string table...\n");
-printf("----------------------------------\n");
-
-if (stringLiteralTable && stringLiteralTable->position.wrte > 0) {
-	de_int i = 0;
-	while (i < stringLiteralTable->position.wrte) {
-		if (stringLiteralTable->content[i] != '\0') {
-			printf("%s\n", &stringLiteralTable->content[i]);
+			while (i < stringLiteralTable->position.wrte && stringLiteralTable->content[i] != '\0')
+				i++;
+			i++; // Skip null terminator
 		}
-
-		// Move to next string
-		while (i < stringLiteralTable->position.wrte && stringLiteralTable->content[i] != '\0') {
-			i++;
-		}
-		i++; // Skip the null terminator
 	}
-}
+	printf("----------------------------------\n");
+	/* Print scanner errors */
+	printf("Number of scanner errors: %d\n", errorCount);
 
-printf("----------------------------------\n");
+	/* Print token statistics */
+	printf("----------------------------------\n");
+	printf("Token Statistics:\n");
+	printf("----------------------------------\n");
 
-/* Print the number of error*/
-int errorCount = 0;
-Token t = tokenizer();
-if (t.code == ERR_T) {
-	errorCount++;
-}
-printf("Number of scanner errors: %d\n", errorCount);// end of the error count print
+	for (int i = 0; i < NUM_TOKENS; i++) {
+		if (tokenCounts[i] > 0)
+			printf("%-15s = %d\n", tokenStrTable[i], tokenCounts[i]);
+	}
 
-/* Print function of */
-printf("----------------------------------\n");
-printf("Statistics:\n");
-printf("----------------------------------\n");
-for (int i = 0; i < NUM_TOKENS; i++) {
-	if (tokenCounts[i] > 0)
-		printf("Token[%s]=%d\n", tokenStrTable[i], tokenCounts[i]);
-}
-printf("----------------------------------\n");
+	printf("----------------------------------\n");
 
-	return (EXIT_SUCCESS);
+
+	return EXIT_SUCCESS;
 }
 
 /*
