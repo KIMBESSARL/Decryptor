@@ -125,138 +125,141 @@ de_void printToken(Token t);
 
 
 de_int main3Scanner(de_int argc, de_strg* argv) {
-	stringLiteralTable = malloc(sizeof(Buffer));
-	stringLiteralTable->content = malloc(INITIAL_SIZE);
-	stringLiteralTable->size = INITIAL_SIZE;
-	stringLiteralTable->position.wrte = 0;
-	stringLiteralTable->flags.isEmpty = TRUE;
+    // Initialize string literal table
+    stringLiteralTable = malloc(sizeof(Buffer));
+    stringLiteralTable->content = malloc(INITIAL_SIZE);
+    stringLiteralTable->size = INITIAL_SIZE;
+    stringLiteralTable->position.wrte = 0;
+    stringLiteralTable->flags.isEmpty = TRUE;
+
+    BufferPointer sourceBuffer;
+    Token currentToken;
+    de_int loadSize = 0;
+    de_strg filename = NULL;
+    de_int tokenCounts[NUM_TOKENS] = { 0 };
+    de_int errorCount = 0;
+
+    /* Check for correct arguments */
+    if (argc < 3) {
+        fprintf(stderr, "Usage: %s <option> <source file>\n", argv[0]);
+        exit(EXIT_FAILURE);
+    }
+
+    printf("[Debug mode: %d]\n", DEBUG);
+
+    /* Create source buffer */
+    sourceBuffer = readerCreate(READER_DEFAULT_SIZE, READER_DEFAULT_INCREMENT, MODE_MULTI);
+    if (!sourceBuffer) {
+        fprintf(stderr, "Could not create source buffer\n");
+        exit(EXIT_FAILURE);
+    }
+
+    /* Load source file */
+    filename = argv[2];
+    loadSize = readerLoad(sourceBuffer, filename);
+    if (loadSize == READER_ERROR) {
+        fprintf(stderr, "Error loading file %s\n", filename);
+        exit(EXIT_FAILURE);
+    }
+
+    /* Add SEOF marker */
+    readerAddChar(sourceBuffer, READER_TERMINATOR);
+
+    /* Display source buffer */
+    if (loadSize > 0)
+        displayScanner(sourceBuffer);
+
+    /* Initialize scanner */
+    if (startScanner(sourceBuffer) != EXIT_SUCCESS) {
+        printf("Scanner initialization failed.\n");
+        exit(EXIT_FAILURE);
+    }
+
+    printf("\nScanning source file...\n");
+    printf("Token\t\tAttribute\n");
+    printf("----------------------------------\n");
+
+    /* --- Main tokenization loop --- */
+    int additions = 0;
+
+    while (1) {
+        Token t = tokenizer();
+
+        // Detect upcoming EOF before printing it
+        if ((t.code == SEOF_T || t.code == EOS_T) && additions < 1) {
+            // Append new content directly into the existing buffer
+            de_int oldWrite = sourceBuffer->position.wrte;
+
+            const char* newLine = "";
+               /* "% the new comment line in my input file\n"
+                "% the third line\n"
+                "% the fourth line\n"
+                "man(X)\n"
+                "% Facts: Artists and their attributes\n"
+                "artist(drake).\n"
+                "artist(nav).\n"
+                "artist(toBi).\n"
+                "artist(maestro_fresh_wes).\n";*/
+
+            for (int i = 0; newLine[i] != '\0'; i++)
+                readerAddChar(sourceBuffer, newLine[i]);
+
+            // Add terminator again
+            readerAddChar(sourceBuffer, READER_TERMINATOR);
+
+            // Start reading from newly added section
+            sourceBuffer->position.read = oldWrite;
+
+            additions++;
+            continue; // go read from appended text without printing EOF
+        }
+
+        // If it's *not* EOF, print normally
+        if (t.code != SEOF_T && t.code != EOS_T)
+            printToken(t);
+
+        tokenCounts[t.code]++; // <-- update stats
+        if (t.code == ERR_T)
+            errorCount++;
+
+        // Stop only after the *final* EOF
+        if ((t.code == SEOF_T || t.code == EOS_T) && additions >= 1)
+            break;
+    }
 
 
-	BufferPointer sourceBuffer;		/* Pointer to input (source) buffer */
-	FILE* fileHandler;				/* Input file handle */
-	Token currentToken;				/* Token produced by the scanner */
-	de_int loadSize = 0;			/* The size of the file loaded in the buffer */
-	de_strg filename = NULL;        /* File name */
-	de_int tokenCounts[NUM_TOKENS] = { 0 };  // Initialize all counts to 0
 
+    /* --- Print string literal table --- */
+    printf("\nPrinting string table...\n");
+    printf("----------------------------------\n");
+    if (stringLiteralTable && stringLiteralTable->position.wrte > 0) {
+        de_int i = 0;
+        while (i < stringLiteralTable->position.wrte) {
+            if (stringLiteralTable->content[i] != '\0')
+                printf("%s\n", &stringLiteralTable->content[i]);
 
-	/* Check for correct arrguments - source file name */
-	if (argc <= 2) {
-		/* __DATE__, __TIME__, __LINE__, __FILE__ are predefined preprocessor macros*/
-		printScannerError("Date: %s  Time: %s", __DATE__, __TIME__);
-		printScannerError("Runtime error at line %d in file %s", __LINE__, __FILE__);
-		printScannerError("%s%s", argv[0], ": Missing source file name.");
-		printScannerError("%s", "Usage: <Option=1> <SourceFile>");
-		exit(EXIT_FAILURE);
-	}
+            while (i < stringLiteralTable->position.wrte && stringLiteralTable->content[i] != '\0')
+                i++;
+            i++;
+        }
+    }
+    printf("----------------------------------\n");
 
-	/* Shows debug mode */
-	printf("%s%d%s", "[Debug mode: ", DEBUG, "]\n");
+    /* --- Print summary --- */
+    printf("Number of scanner errors: %d\n", errorCount);
+    printf("----------------------------------\n");
+    printf("Token Statistics:\n");
+    printf("----------------------------------\n");
 
-	/* Create a source code input buffer - multiplicative mode */
-	sourceBuffer = readerCreate(READER_DEFAULT_SIZE, READER_DEFAULT_INCREMENT, MODE_MULTI);
+    for (int i = 0; i < NUM_TOKENS; i++) {
+        if (tokenCounts[i] > 0)
+            printf("%-15s = %d\n", tokenStrTable[i], tokenCounts[i]);
+    }
 
-	if (sourceBuffer == NULL) {
-		printScannerError("%s%s", argv[1], ": Could not create source buffer");
-		exit(EXIT_FAILURE);
-	}
-
-
-	/* Ensure proper arguments */
-	if (argc < 3) {
-		fprintf(stderr, "Usage: %s <source file>\n", argv[0]);
-		return EXIT_FAILURE;
-	}
-
-	/* Get filename */
-	filename = argv[2];
-
-	/* Create source buffer */
-	sourceBuffer = readerCreate(READER_DEFAULT_SIZE, READER_DEFAULT_INCREMENT, MODE_MULTI);
-	if (!sourceBuffer) {
-		fprintf(stderr, "Could not create source buffer\n");
-		exit(EXIT_FAILURE);
-	}
-
-	/* Load file into buffer */
-	loadSize = readerLoad(sourceBuffer, filename);
-	if (loadSize == READER_ERROR) {
-		fprintf(stderr, "%s: Error loading file %s\n", argv[0], filename);
-		exit(EXIT_FAILURE);
-	}
-
-	/* Add SEOF marker */
-	readerAddChar(sourceBuffer, READER_TERMINATOR);
-
-	/* Display source buffer */
-	if (loadSize > 0) {
-		displayScanner(sourceBuffer);
-	}
-
-	/* Initialize scanner */
-	if (startScanner(sourceBuffer) != EXIT_SUCCESS) {
-		printf("Scanner initialization failed.\n");
-		exit(EXIT_FAILURE);
-	}
-
-	/* Print header */
-	printf("\nScanning source file...\n");
-	printf("Token\t\tAttribute\n");
-	printf("----------------------------------\n");
-
-	/* Token statistics array */
-	int errorCount = 0;
-	Token t;
-
-	/* Main tokenization loop */
-	while (1) {
-		t = tokenizer();
-		if (t.code == SEOF_T) break;   // stop at end of file
-
-		printToken(t);                 // print the token
-
-		// Count the token occurrence
-		if (t.code >= 0 && t.code < NUM_TOKENS)
-			tokenCounts[t.code]++;
-
-		// Count errors specifically
-		if (t.code == ERR_T)
-			errorCount++;
-	}
-
-	/* Print string literal table */
-	printf("\nPrinting string table...\n");
-	printf("----------------------------------\n");
-	if (stringLiteralTable && stringLiteralTable->position.wrte > 0) {
-		de_int i = 0;
-		while (i < stringLiteralTable->position.wrte) {
-			if (stringLiteralTable->content[i] != '\0')
-				printf("%s\n", &stringLiteralTable->content[i]);
-
-			while (i < stringLiteralTable->position.wrte && stringLiteralTable->content[i] != '\0')
-				i++;
-			i++; // Skip null terminator
-		}
-	}
-	printf("----------------------------------\n");
-	/* Print scanner errors */
-	printf("Number of scanner errors: %d\n", errorCount);
-
-	/* Print token statistics */
-	printf("----------------------------------\n");
-	printf("Token Statistics:\n");
-	printf("----------------------------------\n");
-
-	for (int i = 0; i < NUM_TOKENS; i++) {
-		if (tokenCounts[i] > 0)
-			printf("%-15s = %d\n", tokenStrTable[i], tokenCounts[i]);
-	}
-
-	printf("----------------------------------\n");
-
-
-	return EXIT_SUCCESS;
+    printf("----------------------------------\n");
+    return EXIT_SUCCESS;
 }
+
 
 /*
 ************************************************************

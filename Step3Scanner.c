@@ -135,48 +135,6 @@ static BufferPointer sourceBuffer;			/* Pointer to input source buffer */
 
 
 
-
-
-const char* tokenStr(de_int code) {
-	if (code < 0 || code >= NUM_TOKENS) return "UNKNOWN_T";
-	return tokenStrTable[code];
-}
-
-
-
-/* startScanner: just initialize and verify buffer has content */
-de_int startScanner(BufferPointer psc_buf) {
-	for (de_int i = 0; i < NUM_TOKENS; i++)
-		scData.scanHistogram[i] = 0;
-
-	if (!psc_buf || readerGetPosWrte(psc_buf) <= 0) {
-		printf("Decryptor: Empty program buffer - scanning canceled\n");
-		return EXIT_FAILURE;
-	}
-
-	readerRecover(psc_buf);         // Reset reader position to start
-	readerClear(stringLiteralTable);
-	line = 1;
-	sourceBuffer = psc_buf;
-	return EXIT_SUCCESS;
-}
-
-
-
-/* Converts token code to readable string for printing statistics */
- 
-
-/*
- ************************************************************
- * Process Token
- *		Main function of buffer, responsible to classify a char (or sequence
- *		of chars). In the first part, a specific sequence is detected (reading
- *		from buffer). In the second part, a pattern (defined by Regular Expression)
- *		is recognized and the appropriate function is called (related to final states 
- *		in the Transition Diagram).
- ***********************************************************
- */
-
 Token tokenizer(void) {
 	Token currentToken = { 0 };
 	char lexeme[MAX_LEXEME_LEN] = { 0 };
@@ -192,10 +150,10 @@ Token tokenizer(void) {
 		break;
 	}
 
-	// --- Handle EOF ---
-	if (c == EOS_CHR || c == EOF_CHR) {
+	// --- Handle temporary or real EOF ---
+	if (c == CHARSEOF) {
 		currentToken.code = SEOF_T;
-		currentToken.attribute.seofType = (c == EOS_CHR) ? SEOF_0 : SEOF_255;
+		currentToken.attribute.seofType = SEOF_0;
 		return currentToken;
 	}
 
@@ -205,7 +163,7 @@ Token tokenizer(void) {
 		lexeme[lexLen++] = c;
 		while (1) {
 			c = readerGetChar(sourceBuffer);
-			if (c == NWL_CHR || c == EOS_CHR || c == EOF_CHR) break;
+			if (c == NWL_CHR || c == CHARSEOF) break;
 			if (lexLen < MAX_LEXEME_LEN - 1) lexeme[lexLen++] = c;
 		}
 		lexeme[lexLen] = '\0';
@@ -224,7 +182,7 @@ Token tokenizer(void) {
 	case DOT_CHR: currentToken.code = DOT_T; return currentToken;
 	}
 
-	// --- Handle multi-character tokens ---
+	// --- Start DFA for multi-character tokens ---
 	state = 0;
 	lexLen = 0;
 
@@ -240,7 +198,7 @@ Token tokenizer(void) {
 		}
 		else {
 			if (stateType[nextStateVal] == FSWR)
-				readerRetract(sourceBuffer);
+				readerRetract(sourceBuffer); // retract last char
 			if (stateType[nextStateVal] == FSNR && lexLen < MAX_LEXEME_LEN - 1)
 				lexeme[lexLen++] = c;
 			break;
@@ -250,7 +208,7 @@ Token tokenizer(void) {
 	// Null-terminate lexeme
 	lexeme[lexLen] = '\0';
 
-	// --- Handle special tokens ---
+	// --- Handle special token COLON_DASH ---
 	if (strcmp(lexeme, ":-") == 0) {
 		currentToken.code = COLON_DASH_T;
 		strcpy(currentToken.attribute.idLexeme, ":-");
@@ -262,6 +220,7 @@ Token tokenizer(void) {
 		currentToken = (*finalStateTable[nextStateVal])(lexeme);
 	}
 	else {
+		// Fallback to error token
 		currentToken.code = ERR_T;
 		strncpy(currentToken.attribute.errLexeme, lexeme, ERR_LEN - 1);
 		currentToken.attribute.errLexeme[ERR_LEN - 1] = '\0';
@@ -389,11 +348,16 @@ void printToken(Token token) {
 	}
 }
 
+//const de_strg tokenStr(int code) {
+//	if (code >= 0 && code < NUM_TOKENS)
+//		return tokenStrTable[code];
+//	return "UNKNOWN_T";
+//}
 
  /* TO_DO: Adjust the function for ID */
 // --- Keyword check helper ---
-de_int isKeyword(const char* lexeme) {
-	static const char* keywords[] = {
+de_int isKeyword(const de_strg lexeme) {
+	static const de_strg keywords[] = {
 		"data", "code", "int", "real", "string", "if", "then", "else", "while", "do", "return", "mortal", "man"
 	};
 	size_t n = sizeof(keywords) / sizeof(keywords[0]);
@@ -469,11 +433,17 @@ Token funcSEP(de_strg lexeme) {
 }
 
 // --- End of statement ---
+//Token funcEOS(de_strg lexeme) {
+//	Token t = { 0 };
+//	//printf("[DEBUG] funcEOS() called with '%s'\n", lexeme);
+//
+//	t.code = EOS_T;
+//	return t;
+//}
 Token funcEOS(de_strg lexeme) {
 	Token t = { 0 };
-	//printf("[DEBUG] funcEOS() called with '%s'\n", lexeme);
-
-	t.code = EOS_T;
+	t.code = SEOF_T;           // was EOS_T
+	t.attribute.seofType = SEOF_0;
 	return t;
 }
 
@@ -520,6 +490,7 @@ Token funcCMT(de_strg lexeme) {
 	t.attribute.idLexeme[VID_LEN] = '\0';
 	return t;
 }
+
 
 
 /*
@@ -758,4 +729,13 @@ Token funcIL(de_strg lexeme) {
 	t.code = INL_T;
 	t.attribute.intValue = atoi(lexeme);
 	return t;
+}
+
+de_int line = 1;
+
+de_int startScanner(BufferPointer buffer) {
+	if (buffer == NULL) return EXIT_FAILURE;
+	sourceBuffer = buffer;
+	line = 1;
+	return EXIT_SUCCESS;
 }

@@ -453,24 +453,32 @@ de_boln readerRestore(BufferPointer const readerPointer) {
 *	- Adjust for your LANGUAGE.
 *************************************************************
 */
-
 de_char readerGetChar(BufferPointer const readerPointer) {
     if (!readerPointer || !readerPointer->content) return CHARSEOF;
-    if (readerPointer->position.read >= readerPointer->position.wrte) return CHARSEOF;
+
+    // No new content yet
+    if (readerPointer->position.read >= readerPointer->position.wrte)
+        return CHARSEOF; // Can be used to pause scanning until more chars are added
+
     de_char ch = readerPointer->content[readerPointer->position.read];
-    //printf("[DEBUG] readerGetChar: char='%c' at pos=%d\n", ch, readerPointer->position.read);
     readerPointer->position.read++;
     readerPointer->flags.isRead = TRUE;
     return ch;
 }
 
+
+
+
 //de_char readerGetChar(BufferPointer const readerPointer) {
 //    if (!readerPointer || !readerPointer->content) return CHARSEOF;
 //    if (readerPointer->position.read >= readerPointer->position.wrte) return CHARSEOF;
-//    de_char ch = readerPointer->content[readerPointer->position.read++];
+//    de_char ch = readerPointer->content[readerPointer->position.read];
+//    //printf("[DEBUG] readerGetChar: char='%c' at pos=%d\n", ch, readerPointer->position.read);
+//    readerPointer->position.read++;
 //    readerPointer->flags.isRead = TRUE;
 //    return ch;
 //}
+
 
 /*
 ***********************************************************
