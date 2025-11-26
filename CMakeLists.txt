@@ -32,14 +32,17 @@ if (POLICY CMP0141)
 endif()
 
 project ("Decryptor")
+set(CMAKE_BUILD_TYPE Debug)
+
 
 # Add source to this project's executable.
 add_executable (Decryptor  
 	"Compilers.h"		"Compilers.c"
 	"Step1Coder.h"		"Step1Coder.c"		"Main1Coder.c"
 	"Main2Reader.c"     "Step2Reader.c"     "Step2Reader.h"
-	"Main3Scanner.c"		"Step3Scanner.c"	"Step3Scanner.h"    
- )
+	"Main3Scanner.c"	"Step3Scanner.c"	"Step3Scanner.h" 
+	"Main4Parser.c"		"Step4Parser.c"		"Step4Parser.h"
+  )
 if (CMAKE_VERSION VERSION_GREATER 3.12)
   set_property(TARGET Decryptor PROPERTY CXX_STANDARD 20)
 endif()

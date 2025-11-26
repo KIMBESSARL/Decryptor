@@ -133,7 +133,7 @@ de_int main3Scanner(de_int argc, de_strg* argv) {
     stringLiteralTable->flags.isEmpty = TRUE;
 
     BufferPointer sourceBuffer;
-    Token currentToken;
+    //Token currentToken;
     de_int loadSize = 0;
     de_strg filename = NULL;
     de_int tokenCounts[NUM_TOKENS] = { 0 };

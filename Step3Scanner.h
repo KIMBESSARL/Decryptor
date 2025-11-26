@@ -57,6 +57,7 @@
 #include <_null.h> /* NULL pointer constant is defined there */
 #endif
 
+
 /*#pragma warning(1:4001) */	/*to enforce C89 type comments  - to make //comments an warning */
 
 /*#pragma warning(error:4001)*/	/* to enforce C89 comments - to make // comments an error */
@@ -68,7 +69,7 @@
 //#define KWT_SIZE 10
 #define MODE_ADDIT 0
 //#define MODE_MULTI 2
-#define MAX_LEXEME_LEN 256  // keep as 256, but guard all writes carefully
+#define MAX_LEXEME_LEN 128  // keep as 256, but guard all writes carefully
 
 #define RTE_CODE 1  /* Value for run-time error */
 enum CHAR_CLASSES {
@@ -81,17 +82,17 @@ enum CHAR_CLASSES {
 enum TOKENS {
 	ERR_T, MNID_T, INL_T, STR_T, LPR_T, RPR_T, LBR_T, RBR_T,
 	KW_T, EOS_T, RTE_T, SEOF_T, CMT_T, OPR_T, ID_T, FLT_T, SEP_T,
-	VAR_T, DOT_T, COLON_DASH_T
+	VAR_T, DOT_T, COLON_DASH_T, IVID_T, FVID_T, SVID_T, COM_T
 };
 
 
 
-#define NUM_TOKENS 21
+#define NUM_TOKENS 22
 
 static const char* tokenStrTable[NUM_TOKENS] = {
 	"ERR_T", "MNID_T", "INL_T", "STR_T", "LPR_T", "RPR_T", "LBR_T", "RBR_T",
 	"KW_T", "EOS_T", "RTE_T", "SEOF_T", "CMT_T", "OPR_T", "ID_T", "FLT_T", "SEP_T",
-	"VAR_T", "DOT_T", "COLON_DASH_T", "SQUOTE_T"
+	"VAR_T", "DOT_T", "COLON_DASH_T", "SQUOTE_T","COM_T"
 };
 
 
@@ -211,8 +212,12 @@ typedef struct ScannerData {
 #define COMMA_CHR ','     // CH41
 #define DOT_CHR '.'       // CH42
 #define COLON_CHR ':'     // CH43
-#define DQUOTE_CHR '\"'   // CH44
 #define BSLASH_CHR '\\'   // CH45
+#define SPC_CHR     ' '     // Space
+#define DOT_CHR     '.'
+#define SEP_CHR     ','     // <--- Add this
+//#define CHARSEOF    EOF
+
 
 /*  Special case tokens processed separately one by one in the token-driven part of the scanner:
  *  LPR_T, RPR_T, LBR_T, RBR_T, EOS_T, SEOF_T and special chars used for tokenis include _, & and ' */
@@ -298,7 +303,7 @@ int isSeparator(char c);
 de_void printScannerData(de_void);
 Token funcDot(de_strg lexeme);
 Token funcColonDash(de_strg lexeme);
-Token funcVar(de_strg lexeme);
+//Token funcVar(de_strg lexeme);
 void printToken(Token t);
 de_real parseFloatAttribute(de_strg lexeme);
 de_int getSeparatorAttribute(de_strg lexeme);
@@ -308,6 +313,7 @@ static de_int nextState(de_int currentState, de_char c); /* Computes the next st
 //de_void printScannerData(ScannerData scData);/* Prints scanner statistics (e.g., token histogram) */
 Token tokenizer(de_void); /* Main tokenizer function that returns the next token */
 de_int charClass(de_char ch);
+
 
 
 
@@ -352,13 +358,23 @@ Language keywords
 */
 
 /* TO_DO: Define the number of Keywords from the language */
-#define KWT_SIZE 13
+#define KWT_SIZE 10
 
 static de_strg keywordTable[KWT_SIZE] = {
-	"data", "code", "int", "real", "string",
-	"if", "then", "else", "while", "do", "return",
-	"mortal", "man"
-};;
+	"artist",                  // KW_artist                = 0
+	"genre",                   // KW_genre                 = 1
+	"location",                // KW_location              = 2
+	"award",                   // KW_award                 = 3
+
+	"canadian_hiphop_artist",  // KW_canadian_hiphop_artist= 4
+	"recommend_artist",        // KW_recommend_artist      = 5
+	"top_artist",              // KW_top_artist            = 6
+
+	"hiphop",                  // KW_hiphop                = 7
+	"grammy",                  // KW_grammy                = 8
+	"juno"                     // KW_juno                 = 9
+};
+
 
 /* NEW SECTION: About indentation */
 

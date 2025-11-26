@@ -75,6 +75,10 @@
 #include "Step3Scanner.h"
 #endif
 
+#ifndef PARSER_H_
+#include "Step4Parser.h"
+#endif
+
 
 /*
 ----------------------------------------------------------------
@@ -87,7 +91,10 @@ TO_DO: Global vars definitions
 extern BufferPointer stringLiteralTable;	/* String literal table */
 de_int line;								/* Current line number of the source code */
 extern de_int errorNumber;				/* Defined in platy_st.c - run-time error number */
-static const char* tokenStr(de_int code);
+//static const de_strg tokenStr(de_int code);
+const de_strg tokenStr(enum KEYWORDS t);
+const de_strg tokenCodeToStr(de_int code);
+
 
 /* globals (one definition) */
 de_int numScannerErrors = 0;
@@ -107,7 +114,6 @@ Token(*finalStateTable[NUM_STATES])(de_strg lexeme) = {
 	funcEOS,  // S9
 	NULL,     // S10
 	funcColonDash, // S11
-	//funcFLT,  // S11
 	funcID,   // S12
 	funcColonDash, // S13
 	funcCMT,       // S14
@@ -146,7 +152,10 @@ Token tokenizer(void) {
 	while (1) {
 		c = readerGetChar(sourceBuffer);
 		if (c == SPC_CHR || c == TAB_CHR) continue;
-		if (c == NWL_CHR) { line++; continue; }
+		if (c == NWL_CHR) {
+			line++;
+			continue;
+		}
 		break;
 	}
 
@@ -180,12 +189,12 @@ Token tokenizer(void) {
 	case LBR_CHR: currentToken.code = LBR_T; return currentToken;
 	case RBR_CHR: currentToken.code = RBR_T; return currentToken;
 	case DOT_CHR: currentToken.code = DOT_T; return currentToken;
+	case SEP_CHR:     currentToken.code = COM_T; return currentToken;  // <-- add this
 	}
 
 	// --- Start DFA for multi-character tokens ---
 	state = 0;
 	lexLen = 0;
-
 	while (1) {
 		de_int charClassCode = charClass(c);
 		nextStateVal = transitionTable[state][charClassCode];
@@ -197,10 +206,8 @@ Token tokenizer(void) {
 			c = readerGetChar(sourceBuffer);
 		}
 		else {
-			if (stateType[nextStateVal] == FSWR)
-				readerRetract(sourceBuffer); // retract last char
-			if (stateType[nextStateVal] == FSNR && lexLen < MAX_LEXEME_LEN - 1)
-				lexeme[lexLen++] = c;
+			if (stateType[nextStateVal] == FSWR) readerRetract(sourceBuffer); // retract last char
+			if (stateType[nextStateVal] == FSNR && lexLen < MAX_LEXEME_LEN - 1) lexeme[lexLen++] = c;
 			break;
 		}
 	}
@@ -226,8 +233,25 @@ Token tokenizer(void) {
 		currentToken.attribute.errLexeme[ERR_LEN - 1] = '\0';
 	}
 
+	// --- Map keywords to enum codes ---
+	if (currentToken.code == KW_T) {
+		if (strcmp(lexeme, "artist") == 0) currentToken.attribute.codeType = KW_artist;
+		else if (strcmp(lexeme, "genre") == 0) currentToken.attribute.codeType = KW_genre;
+		else if (strcmp(lexeme, "location") == 0) currentToken.attribute.codeType = KW_location;
+		else if (strcmp(lexeme, "award") == 0) currentToken.attribute.codeType = KW_award;
+		else if (strcmp(lexeme, "canadian_hiphop_artist") == 0) currentToken.attribute.codeType = KW_canadian_hiphop_artist;
+		else if (strcmp(lexeme, "recommend_artist") == 0) currentToken.attribute.codeType = KW_recommend_artist;
+		else if (strcmp(lexeme, "top_artist") == 0) currentToken.attribute.codeType = KW_top_artist;
+		else if (strcmp(lexeme, "hiphop") == 0) currentToken.attribute.codeType = KW_hiphop;
+		else if (strcmp(lexeme, "grammy") == 0) currentToken.attribute.codeType = KW_grammy;
+		else if (strcmp(lexeme, "juno") == 0) currentToken.attribute.codeType = KW_juno;
+		else currentToken.attribute.codeType = NO_ATTR;
+	}
+
 	return currentToken;
 }
+
+
 
 
 
@@ -283,89 +307,128 @@ de_int nextState(de_int state, de_char c) {
  ***********************************************************
  */
 
-void printToken(Token token) {
-	// Print token name first
-	printf("%-15s", tokenStrTable[token.code]);  // Adjust width if needed
+de_void printToken(Token t) {
+	printf("%-10s", tokenCodeToStr(t.code)); // Print token name in a fixed width
 
-	switch (token.code) {
-		// Keywords, identifiers, variables, operators, colon-dash, comments
-	case KW_T:
-	case ID_T:
-	case VAR_T:
-	case OPR_T:
-	case CMT_T:
-		printf("\t%s\n", token.attribute.idLexeme);
-		break;
-
-		// Integer literals
-	case INL_T:
-		printf("\t%d\n", (int)token.attribute.intValue);
-		break;
-
-		// Float literals
-	case FLT_T:
-		printf("\t%.2f\n", token.attribute.floatValue);
-		break;
-
-		// String literals
-	case STR_T:
-		printf("\t%s\n", token.attribute.idLexeme);
-		break;
-
-		// Single-character symbols
-	case LPR_T:
-		printf("\t(\n");
-		break;
-	case RPR_T:
-		printf("\t)\n");
-		break;
-	case LBR_T:
-		printf("\t{\n");
-		break;
-	case RBR_T:
-		printf("\t}\n");
-		break;
-	case DOT_T:
-		printf("\t.\n");
-		break;
-	case COLON_DASH_T:
-		printf("\t:-\n");
-		break;
-
-		// End of file
+	switch (t.code) {
 	case SEOF_T:
-		printf("\t<EOF>\n");
+		printf("\n");
 		break;
 
-		// Error tokens
-	case ERR_T:
-		printf("\t%s\n", token.attribute.errLexeme);
+	case VAR_T:
+		printf("\t %-15s\n", t.attribute.idLexeme);
+		break;
+
+	case KW_T:
+		printf("\t %-15s\n", tokenStr(t.attribute.codeType));
+		break;
+
+	case CMT_T:
+		printf("\t %-20s\n", t.attribute.idLexeme);
+		break;
+
+	case LPR_T: printf("\t ( \n"); break;
+	case RPR_T: printf("\t )\n"); break;
+	case LBR_T: printf("\t {\n"); break;
+	case RBR_T: printf("\t }\n"); break;
+	case DOT_T: printf("\t .\n"); break;
+	case COM_T: printf("\t ,\n"); break;
+
+	case COLON_DASH_T:
+		printf("\t :-\n");
 		break;
 
 	default:
-		printf("\n"); // unknown token
+		printf("\t UNKNOWN\n");
 		break;
 	}
 }
 
-//const de_strg tokenStr(int code) {
-//	if (code >= 0 && code < NUM_TOKENS)
-//		return tokenStrTable[code];
-//	return "UNKNOWN_T";
+
+
+//de_void printToken(Token token) {
+//	printf("%-15s", tokenStrTable[token.code]);
+//	switch (token.code) {
+//	case KW_T:
+//	case VAR_T:
+//	case ID_T:
+//	case OPR_T:
+//	case CMT_T:
+//	case STR_T:
+//		printf("\t%s\n", token.attribute.idLexeme);
+//		break;
+//	case INL_T:
+//		printf("\t%d\n", (int)token.attribute.intValue);
+//		break;
+//	case FLT_T:
+//		printf("\t%.2f\n", token.attribute.floatValue);
+//		break;
+//	case LPR_T: printf("\t(\n"); break;
+//	case RPR_T: printf("\t)\n"); break;
+//	case DOT_T: printf("\t.\n"); break;
+//	case SEP_T: printf("\t,\n"); break;
+//	case COLON_DASH_T: printf("\t:-\n"); break;
+//	case SEOF_T: printf("\t<EOF>\n"); break;
+//	case ERR_T: printf("\t%s\n", token.attribute.errLexeme); break;
+//	default: printf("\n"); break;
+//	}
 //}
+
 
  /* TO_DO: Adjust the function for ID */
 // --- Keyword check helper ---
+// Returns enum value if keyword, -1 otherwise
+// Returns enum value if keyword, -1 otherwise
 de_int isKeyword(const de_strg lexeme) {
-	static const de_strg keywords[] = {
-		"data", "code", "int", "real", "string", "if", "then", "else", "while", "do", "return", "mortal", "man"
-	};
-	size_t n = sizeof(keywords) / sizeof(keywords[0]);
-	for (size_t i = 0; i < n; ++i)
-		if (strcmp(lexeme, keywords[i]) == 0)
-			return 1;
-	return 0;
+	if (strcmp(lexeme, "artist") == 0) return KW_artist;
+	if (strcmp(lexeme, "genre") == 0)  return KW_genre;
+	if (strcmp(lexeme, "location") == 0) return KW_location;
+	if (strcmp(lexeme, "award") == 0) return KW_award;
+	return -1;  // everything else is NOT a keyword
 }
+
+// Classify identifier / keyword / constant
+Token funcID(const de_strg lexeme) {
+	Token t = { 0 };
+	trimLexeme(lexeme);
+
+	de_int kw = isKeyword(lexeme);
+	if (kw != -1) {
+		t.code = KW_T;              // actual keyword
+		t.attribute.codeType = kw;  // map to enum
+	}
+	else {
+		t.code = VAR_T;             // variable / constant / argument
+		strncpy(t.attribute.idLexeme, lexeme, VID_LEN);
+		t.attribute.idLexeme[VID_LEN] = '\0';
+	}
+	return t;
+}
+
+
+// Classify identifier / keyword / constant
+//Token funcID(const char* lexeme) {
+//	Token t = { 0 };
+//	trimLexeme(lexeme);
+//
+//	int kw = isKeyword(lexeme);
+//	if (kw != -1) {
+//		t.code = KW_T;              // actual keyword
+//		t.attribute.codeType = kw;  // map to enum
+//	}
+//	else {
+//		t.code = VAR_T;             // variable / constant / argument
+//		strncpy(t.attribute.idLexeme, lexeme, VID_LEN);
+//		t.attribute.idLexeme[VID_LEN] = '\0';
+//	}
+//	return t;
+//}
+//
+//
+//
+
+
+
 
 
 /*
@@ -381,21 +444,20 @@ de_int isKeyword(const de_strg lexeme) {
  ***********************************************************
  */
 
-/* Handles identifiers, keywords, and variables */
-Token funcID(de_strg lexeme) {
-	Token t = { 0 };
+/* Handles identifiers, keywords, and variables (Remove Space) */
+void trimLexeme(de_strg lexeme) {
+	int i = 0, j = strlen(lexeme) - 1;
+	while (isspace(lexeme[i])) i++;
+	while (j >= i && isspace(lexeme[j])) j--;
 
-	if (isupper((unsigned char)lexeme[0])) {
-		t.code = VAR_T;    // Variable (starts with uppercase)
-	}
-	else {
-		t.code = KW_T;     // Keyword/atom (starts with lowercase)
-	}
-
-	strncpy(t.attribute.idLexeme, lexeme, VID_LEN);
-	t.attribute.idLexeme[VID_LEN] = '\0';
-	return t;
+	int k = 0;
+	while (i <= j) lexeme[k++] = lexeme[i++];
+	lexeme[k] = '\0';
 }
+
+
+
+
 
 // --- Float literal ---
 Token funcFLT(de_strg lexeme) {
@@ -681,7 +743,7 @@ Token funcDot(de_strg lexeme) {
 	return t;
 }
 
-Token funcColonDash(char* lexeme) {
+Token funcColonDash(de_strg lexeme) {
 	Token t = { 0 };
 	t.code = COLON_DASH_T;
 	strcpy(t.attribute.idLexeme, ":-");
@@ -689,13 +751,13 @@ Token funcColonDash(char* lexeme) {
 }
 
 
-Token funcVar(de_strg lexeme) {
-	Token t = { 0 };
-	t.code = VAR_T;
-	strncpy(t.attribute.idLexeme, lexeme, VID_LEN);
-	t.attribute.idLexeme[VID_LEN] = '\0';
-	return t;
-}
+//Token funcVar(de_strg lexeme) {
+//	Token t = { 0 };
+//	t.code = VAR_T;
+//	strncpy(t.attribute.idLexeme, lexeme, VID_LEN);
+//	t.attribute.idLexeme[VID_LEN] = '\0';
+//	return t;
+//}
 
 
 de_void printScannerData(de_void) {
@@ -738,4 +800,41 @@ de_int startScanner(BufferPointer buffer) {
 	sourceBuffer = buffer;
 	line = 1;
 	return EXIT_SUCCESS;
+}
+
+
+const de_strg tokenStr(enum KEYWORDS t) {
+	switch (t) {
+	case KW_artist:                  return "KW_artist";
+	case KW_genre:                   return "KW_genre";
+	case KW_location:                return "KW_location";
+	case KW_award:                   return "KW_award";
+	case KW_canadian_hiphop_artist:  return "KW_canadian_hiphop_artist";
+	case KW_recommend_artist:        return "KW_recommend_artist";
+	case KW_top_artist:              return "KW_top_artist";
+	case KW_hiphop:                  return "KW_hiphop";
+	case KW_grammy:                  return "KW_grammy";
+	case KW_juno:                    return "KW_juno";
+	//case KW_data:                    return "KW_data";
+	//case KW_code:                    return "KW_code";
+	case NO_ATTR:
+	default:                         return "NO_ATTR";
+	}
+}
+
+const de_strg tokenCodeToStr(de_int code) {
+	switch (code) {
+	case SEOF_T: return "SEOF_T";
+	case VAR_T: return "VAR_T";
+	case KW_T: return "KW_T";
+	case CMT_T: return "CMT_T";
+	case LPR_T: return "LPR_T";
+	case RPR_T: return "RPR_T";
+	case LBR_T: return "LBR_T";
+	case RBR_T: return "RBR_T";
+	case DOT_T: return "DOT_T";
+	case COM_T: return "COM_T";
+	case COLON_DASH_T: return "COLON_DASH_T";
+	default: return "UNK";
+	}
 }
